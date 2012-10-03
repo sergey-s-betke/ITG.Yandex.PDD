@@ -1,0 +1,3 @@
+[submodule "ITG.WinAPI"]
+	path = ITG.WinAPI
+	url = https://github.com/sergey-s-betke/ITG.WinAPI.git
