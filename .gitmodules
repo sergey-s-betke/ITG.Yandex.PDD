@@ -1,10 +1,7 @@
 ﻿[submodule "ITG.WinAPI"]
-
-path = ITG.WinAPI
-
-url = https://github.com/sergey-s-betke/ITG.WinAPI.git
+	path = ITG.WinAPI
+	url = https://github.com/sergey-s-betke/ITG.WinAPI.git
 
 [submodule "ITG.RegExps"]
-path = ITG.RegExps
-
-url = https://github.com/sergey-s-betke/ITG.RegExps.git
+	path = ITG.RegExps
+	url = https://github.com/sergey-s-betke/ITG.RegExps.git
