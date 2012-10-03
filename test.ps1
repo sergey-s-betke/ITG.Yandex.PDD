@@ -20,6 +20,11 @@ $Token = Get-YandexToken 'csm.nov.ru' -ErrorAction Stop;
 | Remove-YandexLogo -PassThru `
 ;
 
+Set-YandexLogo `
+	-DomainName 'csm.nov.ru' `
+	-Path 'C:\Users\Sergey.S.Betke\SkyDrive\НЦСМ\Сайт\Логотипы\logo2.png' `
+;
+
 <#
 'csm.nov.ru' `
 | Register-YandexDomain `
@@ -34,6 +39,5 @@ $Token = Get-YandexToken 'csm.nov.ru' -ErrorAction Stop;
 
 # Remove-YandexDomain -DomainName 'test.ru';
 
-Get-YandexEmails;
+# Get-YandexEmails;
 
-'aaa';

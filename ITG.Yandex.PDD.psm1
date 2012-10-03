@@ -191,6 +191,13 @@ function Invoke-API {
 	)]
     
     param (
+		# HTTP метод вызова API.
+		[Parameter(
+			Mandatory=$false
+		)]
+        [ValidateSet( "GET", "POST" )]
+		$HttpMethod = 'GET'
+	,
 		# авторизационный токен, полученный через Get-Token.
 		[Parameter(
 			Mandatory=$true
@@ -247,16 +254,28 @@ function Invoke-API {
 
 	$Params.Add( 'token', $Token );
 	$Params.Add( 'domain', $DomainName );
-	$escapedParams = (
-		$Params.keys `
-		| % { "$_=$([System.Uri]::EscapeDataString($Params.$_))" } `
-	) -join '&';
-	$apiURI = [System.Uri]"$APIRoot/$method.xml?$escapedParams";
-	$wc = New-Object System.Net.WebClient;
+	
+	switch ( $HttpMethod ) {
+		'GET' {
+			$escapedParams = (
+				$Params.keys `
+				| % { "$_=$([System.Uri]::EscapeDataString($Params.$_))" } `
+			) -join '&';
+			$apiURI = [System.Uri]"$APIRoot/$method.xml?$escapedParams";
+			$wc = New-Object System.Net.WebClient;
+			$WebMethodFunctional = { 
+				$wc.DownloadString( $apiURI );
+			};
+		}
+		'POST' {
+			$WebMethodFunctional = { 
+			};
+		}
+	};
 	if ( $PSCmdlet.ShouldProcess( $DomainName, "Yandex.API.PDD::$method" ) ) {
 		try {
 			Write-Verbose "Вызов API $method для домена $($DomainName): $apiURI.";
-			$res = ( [xml]$wc.DownloadString( $apiURI ) );
+			$res = ( [xml] ( & $WebMethodFunctional ) );
 			Write-Debug "Ответ API $method: $($res.innerXml).";
 		
 			$_ = $res;
@@ -494,6 +513,82 @@ function Register-DefaultEmail {
 	}
 }  
 
+function Set-Logo {
+	<#
+		.Component
+			API Яндекс.Почты для доменов
+		.Synopsis
+		    Метод (обёртка над Яндекс.API add_logo) предназначен для установки логотипа для домена.
+		.Description
+			Метод позволяет установить логотип домена.
+			Синтаксис запроса
+				https://pddimp.yandex.ru/api/add_logo.xml
+			Метод вызывается только как POST-запрос. Файл, содержащий логотип, и параметры передаются
+			как multipart/form-data. Поддерживаются графические файлы форматов jpg, gif, png размером
+			до 2 Мбайт. Имя файла и название параметра не важны.
+		.Link
+			http://api.yandex.ru/pdd/doc/api-pdd/reference/domain-control_add_logo.xml
+		.Example
+			Установка логотипа для домена yourdomain.ru:
+			Set-Logo -DomainName 'yourdomain.ru' -Token $token -Path 'c:\work\logo.png';
+	#>
+
+	[CmdletBinding(
+		SupportsShouldProcess=$true,
+        ConfirmImpact="Medium"
+	)]
+    
+    param (
+		# имя домена - любой из доменов, зарегистрированных под Вашей учётной записью на сервисах Яндекса
+		# если явно домен не указан, то будет использован последний домен, указанный при вызовах yandex.api
+		[Parameter(
+			Mandatory=$false,
+			ValueFromPipeline=$true,
+			ValueFromPipelineByPropertyName=$true
+		)]
+        [string]
+		[ValidateScript( { $_ -match "^$($reDomain)$" } )]
+		[Alias("domain_name")]
+		[Alias("Domain")]
+		$DomainName = $DefaultDomain
+	,
+		# авторизационный токен, полученный через Get-Token. Если не указан, то будет запрошен автоматически
+		# через вызов Get-Token
+		[Parameter(
+		)]
+        [string]
+		[AllowEmptyString()]
+		$Token
+	,
+		# путь к файлу логотипа.
+		# Поддерживаются графические файлы форматов jpg, gif, png размером до 2 Мбайт
+		[Parameter(
+			Mandatory=$true,
+			ValueFromPipelineByPropertyName=$true
+		)]
+        [System.IO.FileInfo]
+		$Path
+	,
+		# передавать домены далее по конвейеру или нет
+		[switch]
+		$PassThru
+	)
+
+	process {
+		Invoke-API `
+			-HttpMethod 'POST' `
+			-method 'api/add_logo' `
+			-Token ( Test-Token $DomainName $Token ) `
+			-DomainName $DomainName `
+			-Params @{
+				Path = $Path
+			} `
+			-SuccessMsg "Логотип для домена $($DomainName) установлен." `
+		;
+		if ( $PassThru ) { $input };
+	}
+}  
+
 function Remove-Logo {
 	<#
 		.Component
@@ -628,6 +723,7 @@ Export-ModuleMember `
 	, Register-Domain `
 	, Remove-Domain `
 	, Register-DefaultEmail `
+	, Set-Logo `
 	, Remove-Logo `
 	, Get-Emails `
 ;
