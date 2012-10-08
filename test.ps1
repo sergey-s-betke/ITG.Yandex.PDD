@@ -20,7 +20,7 @@ $Token = Get-YandexToken 'csm.nov.ru' -ErrorAction Stop;
 | Remove-YandexLogo -PassThru `
 ;
 
-<#  # 22
+<#
 'csm.nov.ru' `
 | Register-YandexDomain `
 | Add-Member `
@@ -36,4 +36,3 @@ $Token = Get-YandexToken 'csm.nov.ru' -ErrorAction Stop;
 
 Get-YandexEmails;
 
-'aaa';

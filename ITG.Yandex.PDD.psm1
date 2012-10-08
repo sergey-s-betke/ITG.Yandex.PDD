@@ -1,11 +1,4 @@
-﻿Import-Module `
-    (join-path `
-        -path $PSScriptRoot `
-        -childPath 'ITG.RegExps\ITG.RegExps' `
-    ) `
-;
-
-Set-Variable `
+﻿Set-Variable `
     -Name DefaultDomain `
     -Value ([string]'') `
 	-Scope Global `
@@ -77,13 +70,6 @@ function Get-Token {
 			$ie.Navigate( $get_tokenAuthURI );
 			$ie.Visible = $True;
 			
-			Import-Module `
-			    (join-path `
-			        -path $PSScriptRoot `
-			        -childPath 'ITG.WinAPI\ITG.WinAPI' `
-			    ) `
-				-ErrorAction Continue
-			;
 			if ( -not $Error ) {
 				$res = [ITG.WinAPI]::SetWindowPos($ie.HWND, (-1), 0, 0, 0, 0, 0x0001 -bor 0x0002);
 				$res = [ITG.WinAPI]::SetForegroundWindow($ie.HWND);
