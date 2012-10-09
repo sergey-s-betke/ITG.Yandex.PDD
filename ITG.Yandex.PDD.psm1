@@ -70,11 +70,13 @@ function Get-Token {
 			$ie.Navigate( $get_tokenAuthURI );
 			$ie.Visible = $True;
 			
-			if ( -not $Error ) {
-				$res = [ITG.WinAPI]::SetWindowPos($ie.HWND, (-1), 0, 0, 0, 0, 0x0001 -bor 0x0002);
-				$res = [ITG.WinAPI]::SetForegroundWindow($ie.HWND);
-			};
+			Import-Module 'ITG.WinAPI.User32';
 			
+			$ie `
+			| Set-WindowZOrder -ZOrder ( [ITG.WinAPI.User32.HWND]::Top ) -PassThru `
+			| Set-WindowForeground `
+			;
+
 			Write-Verbose 'Ждём либо пока Яндекс.Паспорт сработает по cookies, либо пока администратор авторизуется на Яндекс.Паспорт...';
 			while ( `
 			    $ie.Busy `
