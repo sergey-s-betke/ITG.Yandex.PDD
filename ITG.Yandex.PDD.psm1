@@ -1,4 +1,9 @@
-﻿Set-Variable `
+﻿'ITG.WinAPI.User32',
+'ITG.WinAPI.UrlMon',
+'ITG.RegExps' `
+| Import-Module;
+
+Set-Variable `
     -Name DefaultDomain `
     -Value ([string]'') `
 	-Scope Global `
@@ -69,8 +74,6 @@ function Get-Token {
 			Write-Verbose "Отправляем InternetExplorer на Яндекс.Паспорт ($get_tokenAuthURI).";
 			$ie.Navigate( $get_tokenAuthURI );
 			$ie.Visible = $True;
-			
-			Import-Module 'ITG.WinAPI.User32';
 			
 			$ie `
 			| Set-WindowZOrder -ZOrder ( [ITG.WinAPI.User32.HWND]::Top ) -PassThru `
