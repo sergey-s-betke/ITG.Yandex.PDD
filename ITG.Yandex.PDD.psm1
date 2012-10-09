@@ -1,4 +1,9 @@
-﻿Set-Variable `
+﻿'ITG.WinAPI.User32' `
+, 'ITG.WinAPI.UrlMon' `
+, 'ITG.RegExps' `
+| Import-Module;
+
+Set-Variable `
     -Name DefaultDomain `
     -Value ([string]'') `
 	-Scope Global `
