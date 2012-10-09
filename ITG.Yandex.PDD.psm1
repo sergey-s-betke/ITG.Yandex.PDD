@@ -75,8 +75,6 @@ function Get-Token {
 			$ie.Navigate( $get_tokenAuthURI );
 			$ie.Visible = $True;
 			
-			Import-Module 'ITG.WinAPI.User32';
-			
 			$ie `
 			| Set-WindowZOrder -ZOrder ( [ITG.WinAPI.User32.HWND]::Top ) -PassThru `
 			| Set-WindowForeground `
