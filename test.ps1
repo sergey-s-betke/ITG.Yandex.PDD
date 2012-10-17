@@ -2,7 +2,15 @@
 	SupportsShouldProcess=$true,
 	ConfirmImpact="Medium"
 )]
-param ()
+param (
+	# имя домена - любой из доменов, зарегистрированных под Вашей учётной записью на сервисах Яндекса
+	[Parameter()]
+    [string]
+	[ValidateScript( { $_ -match "^$($reDomain)$" } )]
+	[Alias("domain_name")]
+	[Alias("Domain")]
+	$DomainName = 'csm.nov.ru'
+)
 
 Import-Module `
     (join-path `
@@ -13,15 +21,20 @@ Import-Module `
 	-Force `
 ;
 
-$Token = Get-YandexToken 'csm.nov.ru' -ErrorAction Stop;
+$Token = Get-YandexToken $DomainName -ErrorAction Stop;
 
-
-'csm.nov.ru' `
+$DomainName `
 | Remove-YandexLogo -PassThru `
+| Set-YandexLogo `
+    -Path (join-path `
+        -path ( ( [System.IO.FileInfo] ( $myinvocation.mycommand.path ) ).directory ) `
+        -childPath 'ITG.WinAPI.UrlMon\test\test.jpg' `
+    ) `
+    -PassThru `
 ;
 
 <#
-'csm.nov.ru' `
+$DomainName `
 | Register-YandexDomain `
 | Add-Member `
 	-MemberType NoteProperty `
@@ -32,7 +45,7 @@ $Token = Get-YandexToken 'csm.nov.ru' -ErrorAction Stop;
 ;
 #>
 
-# Remove-YandexDomain -DomainName 'test.ru';
+# Remove-YandexDomain -DomainName $DomainName;
 
 Get-YandexEmails;
 
