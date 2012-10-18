@@ -266,37 +266,51 @@ function Invoke-API {
 			$WebMethodFunctional = { 
 				$wreq = [System.Net.WebRequest]::Create( $apiURI );
 				$wreq.Method = $HttpMethod;
-				$boundary = "999999";
+				$boundary = "##params-boundary##";
 				$wreq.ContentType = "multipart/form-data; boundary=$boundary";
 				$reqStream = $wreq.GetRequestStream();
 				$writer = New-Object System.IO.StreamWriter( $reqStream );
-				
-				$x = "";
+                $writer.AutoFlush = $true;
+                
 				foreach( $param in $Params.keys ) {
-					$x += ( @"
+                    Write-Debug ( $Params.$param -is [System.IO.FileInfo] );
+                	if ( $Params.$param -is [System.IO.FileInfo] ) {
+       					$writer.Write( @"
+--$boundary
+Content-Disposition: form-data; name="$param"; filename="$($Params.$param.Name)"
+Content-Type: $(Get-MIME ($Params.$param))
+
+"@
+	        			);
+                        $fs = New-Object System.IO.FileStream (
+                            $Params.$param.FullName, 
+                            [System.IO.FileMode]::Open,
+                            [System.IO.FileAccess]::Read,
+                            [system.IO.FileShare]::Read
+                        );
+                        $fs.CopyTo( $reqStream );
+                        $fs.Close();
+    					$writer.WriteLine();
+                    } else {
+        				$writer.Write( @"
 --$boundary
 Content-Disposition: form-data; name="$param"
 
 $($Params.$param)
 
 "@
-					);
+		        		);
+                    };
 				};
-				$x += ( @"
+				$writer.Write( @"
 --$boundary--
 
 "@ );
-				Write-Debug @"
-Пишем в HTTPWebRequest.GetRequestStream():
-$x
-"@;
-				[char[]] $buffer = ([System.Text.Encoding]::ASCII).GetBytes( $x );
-				$writer.Write( $buffer, 0, $buffer.Length );
+				#[char[]] $buffer = ([System.Text.Encoding]::ASCII).GetBytes( $x );
+				#$writer.Write( $buffer, 0, $buffer.Length );
 
 				$writer.Close();
-#				$writer.Dispose();
 				$reqStream.Close();
-#				$reqStream.Dispose();
 
 				$wres = $wreq.GetResponse();
 				$resStream = $wres.GetResponseStream();
@@ -306,23 +320,10 @@ $x
 				$reader.Close();
 				$resStream.Close();
 				$wres.Close();				
-				$wres.Dispose();
 
 				$responseFromServer;
 			};
 <#
-private static string GetMultipartFileHeader (HttpFile file)
-{
-	return string.Format (
-		"--{0}{4}Content-Disposition: form-data; name=\"{1}\"; filename=\"{2}\"{4}Content-Type: {3}{4}{4}",
-		FormBoundary,
-		file.Name,
-		file.FileName,
-		file.ContentType ?? "application/octet-stream",
-		_lineBreak
-	);
-}
-
 private void WriteMultipartFormData(Stream requestStream)
 		{
 			foreach (var param in Parameters)

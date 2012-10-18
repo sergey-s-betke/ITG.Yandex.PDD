@@ -28,9 +28,8 @@ $DomainName `
 | Set-YandexLogo `
     -Path (join-path `
         -path ( ( [System.IO.FileInfo] ( $myinvocation.mycommand.path ) ).directory ) `
-        -childPath 'ITG.WinAPI.UrlMon\test\test.jpg' `
+        -childPath 'ITG.WinAPI.UrlMon\test\logo.jpg' `
     ) `
-    -PassThru `
 ;
 
 <#
