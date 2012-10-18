@@ -47,5 +47,4 @@ $DomainName `
 
 # Remove-YandexDomain -DomainName $DomainName;
 
-Get-YandexEmails;
-
+# Get-YandexEmails;

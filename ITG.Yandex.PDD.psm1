@@ -54,7 +54,8 @@ function Get-Token {
 		[Parameter(
 			Mandatory=$true,
 			Position=0,
-			ValueFromPipeline=$true
+			ValueFromPipeline=$true,
+			ValueFromRemainingArguments=$true
 		)]
         [string]
 		[ValidateScript( { $_ -match "^$($reDomain)$" } )]
@@ -186,8 +187,8 @@ function Invoke-API {
 		[Parameter(
 			Mandatory=$false
 		)]
-        [ValidateSet( "GET", "POST" )]
-		$HttpMethod = 'GET'
+		[string]
+		$HttpMethod = [System.Net.WebRequestMethods+HTTP]::Get
 	,
 		# авторизационный токен, полученный через Get-Token.
 		[Parameter(
@@ -211,6 +212,7 @@ function Invoke-API {
 		$DomainName
 	,
 		# коллекция параметров метода API
+		[AllowEmptyCollection()]
 		[System.Collections.IDictionary]
 		$Params = @{}
 	,
@@ -247,7 +249,7 @@ function Invoke-API {
 	$Params.Add( 'domain', $DomainName );
 	
 	switch ( $HttpMethod ) {
-		'GET' {
+		( [System.Net.WebRequestMethods+HTTP]::Get ) {
 			$escapedParams = (
 				$Params.keys `
 				| % { "$_=$([System.Uri]::EscapeDataString($Params.$_))" } `
@@ -258,16 +260,98 @@ function Invoke-API {
 				$wc.DownloadString( $apiURI );
 			};
 		}
-		'POST' {
+		( [System.Net.WebRequestMethods+HTTP]::Post ) {
+			$apiURI = [System.Uri] "$APIRoot/$method.xml"; ## -replace 'https://', 'http://'
+			
 			$WebMethodFunctional = { 
+				$wreq = [System.Net.WebRequest]::Create( $apiURI );
+				$wreq.Method = $HttpMethod;
+				$boundary = "999999";
+				$wreq.ContentType = "multipart/form-data; boundary=$boundary";
+				$reqStream = $wreq.GetRequestStream();
+				$writer = New-Object System.IO.StreamWriter( $reqStream );
+				
+				$x = "";
+				foreach( $param in $Params.keys ) {
+					$x += ( @"
+--$boundary
+Content-Disposition: form-data; name="$param"
+
+$($Params.$param)
+
+"@
+					);
+				};
+				$x += ( @"
+--$boundary--
+
+"@ );
+				Write-Debug @"
+Пишем в HTTPWebRequest.GetRequestStream():
+$x
+"@;
+				[char[]] $buffer = ([System.Text.Encoding]::ASCII).GetBytes( $x );
+				$writer.Write( $buffer, 0, $buffer.Length );
+
+				$writer.Close();
+#				$writer.Dispose();
+				$reqStream.Close();
+#				$reqStream.Dispose();
+
+				$wres = $wreq.GetResponse();
+				$resStream = $wres.GetResponseStream();
+	            $reader = New-Object System.IO.StreamReader ( $resStream );
+				$responseFromServer = [string]( $reader.ReadToEnd() );
+
+				$reader.Close();
+				$resStream.Close();
+				$wres.Close();				
+				$wres.Dispose();
+
+				$responseFromServer;
 			};
+<#
+private static string GetMultipartFileHeader (HttpFile file)
+{
+	return string.Format (
+		"--{0}{4}Content-Disposition: form-data; name=\"{1}\"; filename=\"{2}\"{4}Content-Type: {3}{4}{4}",
+		FormBoundary,
+		file.Name,
+		file.FileName,
+		file.ContentType ?? "application/octet-stream",
+		_lineBreak
+	);
+}
+
+private void WriteMultipartFormData(Stream requestStream)
+		{
+			foreach (var param in Parameters)
+			{
+				WriteStringTo(requestStream, GetMultipartFormData(param));
+			}
+
+			foreach (var file in Files)
+			{
+				// Add just the first part of this param, since we will write the file data directly to the Stream
+				WriteStringTo(requestStream, GetMultipartFileHeader(file));
+
+				// Write the file data directly to the Stream, rather than serializing it to a string.
+				file.Writer(requestStream);
+				WriteStringTo(requestStream, _lineBreak);
+			}
+
+			WriteStringTo(requestStream, GetMultipartFooter());
+		}
+
+#>
 		}
 	};
 	if ( $PSCmdlet.ShouldProcess( $DomainName, "Yandex.API.PDD::$method" ) ) {
 		try {
 			Write-Verbose "Вызов API $method для домена $($DomainName): $apiURI.";
-			$res = ( [xml] ( & $WebMethodFunctional ) );
-			Write-Debug "Ответ API $method: $($res.innerXml).";
+			$resString = ( [string] ( & $WebMethodFunctional ) );
+			Write-Debug "Ответ API $method: $($resString).";
+			$res = [xml] $resString;
 		
 			$_ = $res;
 			if ( & $IsSuccessPredicate ) {
@@ -288,7 +372,7 @@ function Invoke-API {
 					-RecommendedAction 'Проверьте параметры.' `
 				;
 			};
-		} catch [System.Management.Automation.MethodInvocationException] {
+		} catch {
 			Write-Error `
 				-Message "$UnknownErrorMsg ($($_.Exception.Message))." `
 				-Category InvalidOperation `
@@ -572,7 +656,7 @@ function Set-Logo {
 			-Token ( Test-Token $DomainName $Token ) `
 			-DomainName $DomainName `
 			-Params @{
-				Path = $Path
+				file = $Path
 			} `
 			-SuccessMsg "Логотип для домена $($DomainName) установлен." `
 		;
