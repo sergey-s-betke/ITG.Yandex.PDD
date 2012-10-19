@@ -54,7 +54,6 @@ $DomainName `
 | Register-YandexAdmin 'sergei.e.gushchin' -PassThru `
 | Get-YandexAdmins;
 
-'csm.nov.ru' `
-| Remove-YandexAdmin 'sergei.e.gushchin' -PassThru `
-| Get-YandexAdmins;
-
+# 'csm.nov.ru' `
+# | Remove-YandexAdmin 'sergei.e.gushchin' -PassThru `
+# | Get-YandexAdmins;

@@ -996,6 +996,83 @@ function Remove-Admin {
 	}
 }  
 
+function Register-User {
+	<#
+		.Component
+			API Яндекс.Почты для доменов
+		.Synopsis
+		    Метод (обёртка над Яндекс.API reg_user_token) предназначен для регистрации нового пользователя (ящика) на "припаркованном" на Яндексе домене.
+		.Description
+		    Метод (обёртка над Яндекс.API reg_user_token) предназначен для регистрации нового пользователя (ящика) на "припаркованном" на Яндексе домене.
+			Синтаксис запроса
+				https://pddimp.yandex.ru/reg_user_token.xml ? token =<токен> & u_login =<логин пользователя> & u_password =<пароль пользователя>
+		.Link
+			http://api.yandex.ru/pdd/doc/api-pdd/reference/domain-users_reg_user_token.xml
+		.Example
+			Register-User -DomainName 'csm.nov.ru' -Credential 'test_user';
+	#>
+
+	[CmdletBinding(
+		SupportsShouldProcess=$true,
+        ConfirmImpact="High"
+	)]
+    
+    param (
+		# имя домена, зарегистрированного на сервисах Яндекса
+		[Parameter(
+			Mandatory=$false
+			, ValueFromPipeline=$true
+			, ValueFromPipelineByPropertyName=$true
+		)]
+        [string]
+		[ValidateScript( { $_ -match "^$($reDomain)$" } )]
+		[Alias("domain_name")]
+		[Alias("Domain")]
+		$DomainName = $DefaultDomain
+	,
+		# авторизационный токен, полученный через Get-Token. Если не указан, то будет использован
+		# последний полученный
+		[Parameter(
+		)]
+        [string]
+		[AllowEmptyString()]
+		$Token
+	,
+		# Логин дополнительного администратора на @yandex.ru
+		[Parameter(
+			Mandatory=$true
+			, Position=0
+			, ValueFromRemainingArguments=$true
+		)]
+        [string]
+		[ValidateNotNullOrEmpty()]
+		[Alias("EMail")]
+		[Alias("Name")]
+		[Alias("Login")]
+		$Credential
+	,
+		# передавать домены далее по конвейеру или нет
+		[switch]
+		$PassThru
+	)
+
+	process {
+		Invoke-API `
+			-method 'api/multiadmin/add_admin' `
+			-Token ( Test-Token $DomainName $Token ) `
+			-DomainName $DomainName `
+			-Params @{
+				login = $Credential
+			} `
+			-IsSuccessPredicate { [bool]$_.SelectSingleNode('action/domain/status/success') } `
+			-IsFailurePredicate { [bool]$_.SelectSingleNode('action/domain/status/error') } `
+			-FailureMsgFilter { $_.action.domain.status.error } `
+		;
+		# $a.GetNetworkCredential().Password;
+		if ( $PassThru ) { $input };
+	}
+}  
+
 Export-ModuleMember `
     Get-Token `
 	, Register-Domain `
@@ -1007,4 +1084,5 @@ Export-ModuleMember `
 	, Get-Admins `
 	, Register-Admin `
 	, Remove-Admin `
+	, Register-User `
 ;
