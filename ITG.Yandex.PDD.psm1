@@ -449,7 +449,7 @@ function Remove-Domain {
 
 	[CmdletBinding(
 		SupportsShouldProcess=$true,
-        ConfirmImpact="Medium"
+        ConfirmImpact="High"
 	)]
     
     param (
@@ -537,8 +537,10 @@ function Register-DefaultEmail {
 	,
 		# имя почтового ящика. Ящик с именем lname должен уже существовать
 		[Parameter(
-			Mandatory=$true,
-			ValueFromPipelineByPropertyName=$true
+			Mandatory=$true
+			, ValueFromPipelineByPropertyName=$true
+			, Position=0
+			, ValueFromRemainingArguments=$true
 		)]
         [string]
 		[ValidateNotNullOrEmpty()]
@@ -591,7 +593,7 @@ function Set-Logo {
 
 	[CmdletBinding(
 		SupportsShouldProcess=$true,
-        ConfirmImpact="Medium"
+        ConfirmImpact="Low"
 	)]
     
     param (
@@ -731,7 +733,7 @@ function Get-Emails {
 
 	[CmdletBinding(
 		SupportsShouldProcess=$true,
-        ConfirmImpact="Medium"
+        ConfirmImpact="Low"
 	)]
     
     param (
@@ -769,10 +771,145 @@ function Get-Emails {
 			-IsFailurePredicate { [bool]$_.page.error } `
 			-FailureMsgFilter { $_.page.error.reason } `
 			-ResultFilter { 
-				$_.page.domains.domain.emails.email `
-				| %{ $_.name; } `
-				;
+				@(
+					$_.page.domains.domain.emails.email `
+					| %{ $_.name; } `
+				);
 			} `
+		;
+	}
+}  
+
+function Get-Admins {
+	<#
+		.Component
+			API Яндекс.Почты для доменов
+		.Synopsis
+		    Метод (обёртка над Яндекс.API get_admins). Метод позволяет получить список дополнительных администраторов домена.
+		.Description
+		    Метод (обёртка над Яндекс.API get_admins). Метод позволяет получить список дополнительных администраторов домена.
+			Метод возвращает список дополнительных администраторов для домена, привязанного к токену. 
+			Синтаксис запроса
+				https://pddimp.yandex.ru/api/multiadmin/get_admins.xml ? token =<токен> & domain =<имя домена>
+		.Link
+			http://api.yandex.ru/pdd/doc/api-pdd/reference/domain-control_get_admins.xml
+		.Example
+			Get-Admins -DomainName 'csm.nov.ru';
+	#>
+
+	[CmdletBinding(
+		SupportsShouldProcess=$true,
+        ConfirmImpact="Low"
+	)]
+    
+    param (
+		# имя домена, зарегистрированного на сервисах Яндекса
+		[Parameter(
+			Mandatory=$false,
+			ValueFromPipeline=$true,
+			ValueFromPipelineByPropertyName=$true
+		)]
+        [string]
+		[ValidateScript( { $_ -match "^$($reDomain)$" } )]
+		[Alias("domain_name")]
+		[Alias("Domain")]
+		$DomainName = $DefaultDomain
+	,
+		# авторизационный токен, полученный через Get-Token. Если не указан, то будет использован
+		# последний полученный
+		[Parameter(
+		)]
+        [string]
+		[AllowEmptyString()]
+		$Token
+	)
+
+	process {
+		Invoke-API `
+			-method 'api/multiadmin/get_admins' `
+			-Token ( Test-Token $DomainName $Token ) `
+			-DomainName $DomainName `
+			-IsSuccessPredicate { [bool]$_.SelectSingleNode('action/domain/status/success') } `
+			-IsFailurePredicate { [bool]$_.SelectSingleNode('action/domain/status/error') } `
+			-FailureMsgFilter { $_.action.domain.status.error } `
+			-ResultFilter { 
+				@(
+					$_.SelectNodes('action/domain/other-admins/login') `
+					| %{ $_.'#text'; } `
+				);
+			} `
+		;
+	}
+}  
+
+function Register-Admin {
+	<#
+		.Component
+			API Яндекс.Почты для доменов
+		.Synopsis
+		    Метод (обёртка над Яндекс.API set_admin) предназначен для указания логина дополнительного администратора домена.
+		.Description
+		    Метод (обёртка над Яндекс.API set_admin) предназначен для указания логина дополнительного администратора домена.
+			В качестве логина может быть указан только логин на @yandex.ru, но не на домене, делегированном на Яндекс.
+			Синтаксис запроса
+				https://pddimp.yandex.ru/api/multiadmin/add_admin.xml ? token =<токен> & domain =<имя домена> & login =<логин администратора>
+		.Link
+			http://api.yandex.ru/pdd/doc/api-pdd/reference/domain-control_add_admin.xml
+		.Example
+			Register-Admin -DomainName 'csm.nov.ru' -Credential 'sergei.e.gushchin';
+	#>
+
+	[CmdletBinding(
+		SupportsShouldProcess=$true,
+        ConfirmImpact="High"
+	)]
+    
+    param (
+		# имя домена, зарегистрированного на сервисах Яндекса
+		[Parameter(
+			Mandatory=$false
+			, ValueFromPipeline=$true
+			, ValueFromPipelineByPropertyName=$true
+		)]
+        [string]
+		[ValidateScript( { $_ -match "^$($reDomain)$" } )]
+		[Alias("domain_name")]
+		[Alias("Domain")]
+		$DomainName = $DefaultDomain
+	,
+		# авторизационный токен, полученный через Get-Token. Если не указан, то будет использован
+		# последний полученный
+		[Parameter(
+		)]
+        [string]
+		[AllowEmptyString()]
+		$Token
+	,
+		# Логин дополнительного администратора на @yandex.ru
+		[Parameter(
+			Mandatory=$true
+			, Position=0
+			, ValueFromRemainingArguments=$true
+		)]
+        [string]
+		[ValidateNotNullOrEmpty()]
+		[Alias("Admin")]
+		[Alias("Name")]
+		[Alias("Login")]
+		$Credential
+	)
+
+	process {
+		Invoke-API `
+			-method 'api/multiadmin/add_admin' `
+			-Token ( Test-Token $DomainName $Token ) `
+			-DomainName $DomainName `
+			-Params @{
+				login = $Credential
+			} `
+			-IsSuccessPredicate { [bool]$_.SelectSingleNode('action/domain/status/success') } `
+			-IsFailurePredicate { [bool]$_.SelectSingleNode('action/domain/status/error') } `
+			-FailureMsgFilter { $_.action.domain.status.error } `
 		;
 	}
 }  
@@ -785,4 +922,6 @@ Export-ModuleMember `
 	, Set-Logo `
 	, Remove-Logo `
 	, Get-Emails `
+	, Get-Admins `
+	, Register-Admin `
 ;

@@ -23,15 +23,6 @@ Import-Module `
 
 $Token = Get-YandexToken $DomainName -ErrorAction Stop;
 
-$DomainName `
-| Remove-YandexLogo -PassThru `
-| Set-YandexLogo `
-    -Path (join-path `
-        -path ( ( [System.IO.FileInfo] ( $myinvocation.mycommand.path ) ).directory ) `
-        -childPath 'ITG.WinAPI.UrlMon\test\logo.jpg' `
-    ) `
-;
-
 <#
 $DomainName `
 | Register-YandexDomain `
@@ -47,3 +38,18 @@ $DomainName `
 # Remove-YandexDomain -DomainName $DomainName;
 
 # Get-YandexEmails;
+
+<#
+$DomainName `
+| Remove-YandexLogo -PassThru `
+| Set-YandexLogo `
+    -Path (join-path `
+        -path ( ( [System.IO.FileInfo] ( $myinvocation.mycommand.path ) ).directory ) `
+        -childPath 'ITG.WinAPI.UrlMon\test\logo.jpg' `
+    ) `
+;
+#>
+
+Register-YandexAdmin 'sergei.e.gushchin';
+
+Get-YandexAdmins;
