@@ -897,6 +897,10 @@ function Register-Admin {
 		[Alias("Name")]
 		[Alias("Login")]
 		$Credential
+	,
+		# передавать домены далее по конвейеру или нет
+		[switch]
+		$PassThru
 	)
 
 	process {
@@ -911,6 +915,84 @@ function Register-Admin {
 			-IsFailurePredicate { [bool]$_.SelectSingleNode('action/domain/status/error') } `
 			-FailureMsgFilter { $_.action.domain.status.error } `
 		;
+		if ( $PassThru ) { $input };
+	}
+}  
+
+function Remove-Admin {
+	<#
+		.Component
+			API Яндекс.Почты для доменов
+		.Synopsis
+		    Метод (обёртка над Яндекс.API del_admin) предназначен для удаления дополнительного администратора домена.
+		.Description
+		    Метод (обёртка над Яндекс.API del_admin) предназначен для удаления дополнительного администратора домена.
+			В качестве логина может быть указан только логин на @yandex.ru, но не на домене, делегированном на Яндекс.
+			Синтаксис запроса
+				https://pddimp.yandex.ru/api/multiadmin/del_admin.xml ? token =<токен> & domain =<имя домена> & login =<имя почтового ящика>
+		.Link
+			http://api.yandex.ru/pdd/doc/api-pdd/reference/domain-control_del_admin.xml
+		.Example
+			Remove-Admin -DomainName 'csm.nov.ru' -Credential 'sergei.e.gushchin';
+	#>
+
+	[CmdletBinding(
+		SupportsShouldProcess=$true,
+        ConfirmImpact="High"
+	)]
+    
+    param (
+		# имя домена, зарегистрированного на сервисах Яндекса
+		[Parameter(
+			Mandatory=$false
+			, ValueFromPipeline=$true
+			, ValueFromPipelineByPropertyName=$true
+		)]
+        [string]
+		[ValidateScript( { $_ -match "^$($reDomain)$" } )]
+		[Alias("domain_name")]
+		[Alias("Domain")]
+		$DomainName = $DefaultDomain
+	,
+		# авторизационный токен, полученный через Get-Token. Если не указан, то будет использован
+		# последний полученный
+		[Parameter(
+		)]
+        [string]
+		[AllowEmptyString()]
+		$Token
+	,
+		# Логин дополнительного администратора на @yandex.ru
+		[Parameter(
+			Mandatory=$true
+			, Position=0
+			, ValueFromRemainingArguments=$true
+		)]
+        [string]
+		[ValidateNotNullOrEmpty()]
+		[Alias("Admin")]
+		[Alias("Name")]
+		[Alias("Login")]
+		$Credential
+	,
+		# передавать домены далее по конвейеру или нет
+		[switch]
+		$PassThru
+	)
+
+	process {
+		Invoke-API `
+			-method 'api/multiadmin/del_admin' `
+			-Token ( Test-Token $DomainName $Token ) `
+			-DomainName $DomainName `
+			-Params @{
+				login = $Credential
+			} `
+			-IsSuccessPredicate { [bool]$_.SelectSingleNode('action/domain/status/success') } `
+			-IsFailurePredicate { [bool]$_.SelectSingleNode('action/domain/status/error') } `
+			-FailureMsgFilter { $_.action.domain.status.error } `
+		;
+		if ( $PassThru ) { $input };
 	}
 }  
 
@@ -924,4 +1006,5 @@ Export-ModuleMember `
 	, Get-Emails `
 	, Get-Admins `
 	, Register-Admin `
+	, Remove-Admin `
 ;
