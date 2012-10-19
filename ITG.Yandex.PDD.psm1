@@ -1001,27 +1001,29 @@ function Register-User {
 		.Component
 			API Яндекс.Почты для доменов
 		.Synopsis
-		    Метод (обёртка над Яндекс.API reg_user_token) предназначен для регистрации нового пользователя (ящика) на "припаркованном" на Яндексе домене.
+		    Метод (обёртка над Яндекс.API reg_user) предназначен для регистрации
+            нового пользователя (ящика) на "припаркованном" на Яндексе домене.
 		.Description
-		    Метод (обёртка над Яндекс.API reg_user_token) предназначен для регистрации нового пользователя (ящика) на "припаркованном" на Яндексе домене.
+		    Метод (обёртка над Яндекс.API reg_user) предназначен для регистрации
+            нового пользователя (ящика) на "припаркованном" на Яндексе домене.
 			Синтаксис запроса
-				https://pddimp.yandex.ru/reg_user_token.xml ? token =<токен> & u_login =<логин пользователя> & u_password =<пароль пользователя>
+				https://pddimp.yandex.ru/reg_user_token.xml ? token =<токен>
+                & u_login =<логин пользователя> & u_password =<пароль пользователя>
 		.Link
-			http://api.yandex.ru/pdd/doc/api-pdd/reference/domain-users_reg_user_token.xml
+			http://api.yandex.ru/pdd/doc/api-pdd/reference/domain-users_reg_user.xml
 		.Example
-			Register-User -DomainName 'csm.nov.ru' -Credential 'test_user';
+			Register-User -DomainName 'csm.nov.ru' -Name 'test_user' -Password 'testpassword';
 	#>
 
 	[CmdletBinding(
-		SupportsShouldProcess=$true,
-        ConfirmImpact="High"
+		SupportsShouldProcess=$true
+        , ConfirmImpact="High"
 	)]
     
     param (
 		# имя домена, зарегистрированного на сервисах Яндекса
 		[Parameter(
 			Mandatory=$false
-			, ValueFromPipeline=$true
 			, ValueFromPipelineByPropertyName=$true
 		)]
         [string]
@@ -1038,18 +1040,30 @@ function Register-User {
 		[AllowEmptyString()]
 		$Token
 	,
-		# Логин дополнительного администратора на @yandex.ru
+		# Учётная запись (lname для создаваемого ящика) на Вашем припаркованном домене
 		[Parameter(
 			Mandatory=$true
-			, Position=0
-			, ValueFromRemainingArguments=$true
+			, ValueFromPipelineByPropertyName=$true
 		)]
-        [string]
+        [System.String]
 		[ValidateNotNullOrEmpty()]
-		[Alias("EMail")]
-		[Alias("Name")]
+		[Alias("Email")]
 		[Alias("Login")]
-		$Credential
+		$LName
+	,
+		# Пароль к создаваемой учётной записи. Может быть как зашифрованным (SecureString), так и простым текстом
+        #(String)
+		[Parameter(
+			Mandatory=$true
+			, ValueFromPipelineByPropertyName=$true
+		)]
+        [ValidateScript({ 
+            [System.String] `
+            , [System.Security.SecureString] `
+            -contains ( $_.GetType() )
+        })]
+		[ValidateNotNullOrEmpty()]
+		$Password
 	,
 		# передавать домены далее по конвейеру или нет
 		[switch]
@@ -1057,18 +1071,22 @@ function Register-User {
 	)
 
 	process {
+        if ( $Password -is [System.String] ) {
+            $Password = ConvertTo-SecureString -String $Password -AsPlainText -Force;
+        };
+        $Credential = New-Object System.Management.Automation.PSCredential( 
+            $LName, 
+            $Password
+        );
 		Invoke-API `
-			-method 'api/multiadmin/add_admin' `
+			-method 'api/reg_user' `
 			-Token ( Test-Token $DomainName $Token ) `
 			-DomainName $DomainName `
 			-Params @{
-				login = $Credential
+	            login = $Credential.GetNetworkCredential().UserName;
+                passwd = $Credential.GetNetworkCredential().Password;
 			} `
-			-IsSuccessPredicate { [bool]$_.SelectSingleNode('action/domain/status/success') } `
-			-IsFailurePredicate { [bool]$_.SelectSingleNode('action/domain/status/error') } `
-			-FailureMsgFilter { $_.action.domain.status.error } `
 		;
-		# $a.GetNetworkCredential().Password;
 		if ( $PassThru ) { $input };
 	}
 }  

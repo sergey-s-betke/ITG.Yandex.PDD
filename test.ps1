@@ -50,10 +50,21 @@ $DomainName `
 ;
 #>
 
+<#
 'csm.nov.ru' `
 | Register-YandexAdmin 'sergei.e.gushchin' -PassThru `
 | Get-YandexAdmins;
+#>
+<#
+'csm.nov.ru' `
+| Remove-YandexAdmin 'sergei.e.gushchin' -PassThru `
+| Get-YandexAdmins;
+#>
 
-# 'csm.nov.ru' `
-# | Remove-YandexAdmin 'sergei.e.gushchin' -PassThru `
-# | Get-YandexAdmins;
+@{ lname='testuser'; password='testpassword'; } `
+, @{ lname='testuser2'; password='testpassword2'; } `
+| Select-Object -Property `
+    @{ name='lname'; expression={ $_.lname; } } `
+    , @{ name='password'; expression={ $_.password; } } `
+| Register-YandexUser `
+;
