@@ -719,9 +719,9 @@ function Get-Emails {
 		.Component
 			API Яндекс.Почты для доменов
 		.Synopsis
-		    Метод (обёртка над Яндекс.API reg_domain_users) Метод позволяет получить список почтовых ящиков.
+		    Метод (обёртка над Яндекс.API get_domain_users) Метод позволяет получить список почтовых ящиков.
 		.Description
-		    Метод (обёртка над Яндекс.API reg_domain_users) Метод позволяет получить список почтовых ящиков.
+		    Метод (обёртка над Яндекс.API get_domain_users) Метод позволяет получить список почтовых ящиков.
 			Метод возвращает список ящиков в домене, привязанном к токену. 
 			Синтаксис запроса
 				https://pddimp.yandex.ru/get_domain_users.xml ? token =<токен> & on_page =<число записей на странице> & page =<номер страницы>
@@ -1049,6 +1049,7 @@ function Register-User {
 		[ValidateNotNullOrEmpty()]
 		[Alias("Email")]
 		[Alias("Login")]
+        [Alias("mailNickname")]
 		$LName
 	,
 		# Пароль к создаваемой учётной записи. Может быть как зашифрованным (SecureString), так и простым текстом
@@ -1064,6 +1065,49 @@ function Register-User {
         })]
 		[ValidateNotNullOrEmpty()]
 		$Password
+	,
+		# Фамилия пользователя
+		[Parameter(
+			Mandatory=$false
+			, ValueFromPipelineByPropertyName=$true
+            , ParameterSetName="ExtraAccountAttributes"
+		)]
+        [System.String]
+		[ValidateNotNullOrEmpty()]
+        [Alias("sn")]
+		$SecondName
+	,
+		# Имя пользователя
+		[Parameter(
+			Mandatory=$false
+			, ValueFromPipelineByPropertyName=$true
+            , ParameterSetName="ExtraAccountAttributes"
+		)]
+        [System.String]
+		[ValidateNotNullOrEmpty()]
+        [Alias("givenName")]
+        [Alias("Name")]
+		$FirstName
+	,
+		# Отчество пользователя
+		[Parameter(
+			Mandatory=$false
+			, ValueFromPipelineByPropertyName=$true
+            , ParameterSetName="ExtraAccountAttributes"
+		)]
+        [System.String]
+		[ValidateNotNull()]
+		$MiddleName
+	,
+		# Пол пользователя
+		[Parameter(
+			Mandatory=$false
+			, ValueFromPipelineByPropertyName=$true
+            , ParameterSetName="ExtraAccountAttributes"
+		)]
+        [System.String]
+		[ValidateNotNullOrEmpty()]
+		$Sex
 	,
 		# передавать домены далее по конвейеру или нет
 		[switch]
@@ -1087,6 +1131,22 @@ function Register-User {
                 passwd = $Credential.GetNetworkCredential().Password;
 			} `
 		;
+        if ( $PsCmdlet.ParameterSetName -eq 'ExtraAccountAttributes' ) {
+    		Invoke-API `
+    			-method 'edit_user' `
+    			-Token ( Test-Token $DomainName $Token ) `
+    			-DomainName $DomainName `
+    			-Params @{
+    	            login = $Credential.GetNetworkCredential().UserName;
+                    password = $Credential.GetNetworkCredential().Password;
+                    iname = ( ($FirstName, $MiddleName | ? { $_ } ) -join ' ' );
+                    fname = $SecondName;
+    			} `
+    			-IsSuccessPredicate { [bool]$_.page.ok } `
+    			-IsFailurePredicate { [bool]$_.page.error } `
+    			-FailureMsgFilter { $_.page.error.reason } `
+    		;
+        };
 		if ( $PassThru ) { $input };
 	}
 }  

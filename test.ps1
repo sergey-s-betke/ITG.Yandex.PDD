@@ -66,5 +66,8 @@ $DomainName `
 | Select-Object -Property `
     @{ name='lname'; expression={ $_.lname; } } `
     , @{ name='password'; expression={ $_.password; } } `
+    , @{ name='sn'; expression={ 'Иванов'; } } `
+    , @{ name='givenName'; expression={ 'Иван'; } } `
+    , @{ name='middleName'; expression={ 'Иванович' } } `
 | Register-YandexUser `
 ;
