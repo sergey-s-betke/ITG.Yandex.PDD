@@ -261,7 +261,7 @@ function Invoke-API {
 			};
 		}
 		( [System.Net.WebRequestMethods+HTTP]::Post ) {
-			$apiURI = [System.Uri] "$APIRoot/$method.xml"; ## -replace 'https://', 'http://'
+			$apiURI = [System.Uri] ( "$APIRoot/$method.xml" );
 			
 			$WebMethodFunctional = { 
 				$wreq = [System.Net.WebRequest]::Create( $apiURI );
@@ -273,12 +273,13 @@ function Invoke-API {
                 $writer.AutoFlush = $true;
                 
 				foreach( $param in $Params.keys ) {
-                    Write-Debug ( $Params.$param -is [System.IO.FileInfo] );
                 	if ( $Params.$param -is [System.IO.FileInfo] ) {
        					$writer.Write( @"
 --$boundary
 Content-Disposition: form-data; name="$param"; filename="$($Params.$param.Name)"
 Content-Type: $(Get-MIME ($Params.$param))
+Content-Transfer-Encoding: binary
+
 
 "@
 	        			);
@@ -288,8 +289,12 @@ Content-Type: $(Get-MIME ($Params.$param))
                             [System.IO.FileAccess]::Read,
                             [system.IO.FileShare]::Read
                         );
-                        $fs.CopyTo( $reqStream );
-                        $fs.Close();
+						try {
+                        	$fs.CopyTo( $reqStream );
+						} finally {
+                        	$fs.Close();
+							$fs.Dispose();
+						};
     					$writer.WriteLine();
                     } else {
         				$writer.Write( @"
@@ -306,9 +311,6 @@ $($Params.$param)
 --$boundary--
 
 "@ );
-				#[char[]] $buffer = ([System.Text.Encoding]::ASCII).GetBytes( $x );
-				#$writer.Write( $buffer, 0, $buffer.Length );
-
 				$writer.Close();
 				$reqStream.Close();
 
@@ -323,28 +325,6 @@ $($Params.$param)
 
 				$responseFromServer;
 			};
-<#
-private void WriteMultipartFormData(Stream requestStream)
-		{
-			foreach (var param in Parameters)
-			{
-				WriteStringTo(requestStream, GetMultipartFormData(param));
-			}
-
-			foreach (var file in Files)
-			{
-				// Add just the first part of this param, since we will write the file data directly to the Stream
-				WriteStringTo(requestStream, GetMultipartFileHeader(file));
-
-				// Write the file data directly to the Stream, rather than serializing it to a string.
-				file.Writer(requestStream);
-				WriteStringTo(requestStream, _lineBreak);
-			}
-
-			WriteStringTo(requestStream, GetMultipartFooter());
-		}
-
-#>
 		}
 	};
 	if ( $PSCmdlet.ShouldProcess( $DomainName, "Yandex.API.PDD::$method" ) ) {
@@ -583,7 +563,7 @@ function Register-DefaultEmail {
 				$_.action.domains.domain `
 				| Select-Object -Property `
 					@{Name='DomainName'; Expression={$_.name}}`
-					, @{Name='DefaultEmail'; Expression={$_.'default-email'.'#text'}} `
+					, @{Name='DefaultEmail'; Expression={$_.'default-email'}} `
 			} `
 		;
 	}
@@ -659,7 +639,10 @@ function Set-Logo {
 			-Params @{
 				file = $Path
 			} `
+			-IsSuccessPredicate { [bool]$_.action.domains.domain.logo.'action-status'.get_item('success') } `
 			-SuccessMsg "Логотип для домена $($DomainName) установлен." `
+			-IsFailurePredicate { [bool]$_.action.domains.domain.logo.'action-status'.get_item('error') } `
+			-FailureMsgFilter { $_.action.domains.domain.logo.'action-status'.error } `
 		;
 		if ( $PassThru ) { $input };
 	}
@@ -688,7 +671,7 @@ function Remove-Logo {
 
 	[CmdletBinding(
 		SupportsShouldProcess=$true,
-        ConfirmImpact="Medium"
+        ConfirmImpact="Low"
 	)]
     
     param (
