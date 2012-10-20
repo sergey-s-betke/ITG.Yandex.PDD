@@ -1414,7 +1414,6 @@ function Get-Forwards {
 		# имя домена, зарегистрированного на сервисах Яндекса
 		[Parameter(
 			Mandatory=$false
-			, ValueFromPipelineByPropertyName=$true
 		)]
         [string]
 		[ValidateScript( { $_ -match "^$($reDomain)$" } )]
@@ -1433,7 +1432,6 @@ function Get-Forwards {
 		# Учётная запись (lname для создаваемого ящика) на Вашем припаркованном домене
 		[Parameter(
 			Mandatory=$true
-			, ValueFromPipelineByPropertyName=$true
 			, Position=0
 		)]
         [System.String]
@@ -1544,6 +1542,108 @@ function New-Forward {
 			-IsFailurePredicate { [bool]$_.page.error } `
 			-FailureMsgFilter { $_.page.error.reason } `
 		;
+	}
+}  
+
+function Remove-Forward {
+	<#
+		.Component
+			API Яндекс.Почты для доменов
+		.Synopsis
+		    Метод (обёртка над Яндекс.API delete_forward) предназначен для удаления
+            перенаправлений почты для ящика на "припаркованном" на Яндексе домене.
+		.Description
+		    Метод (обёртка над Яндекс.API delete_forward) предназначен для удаления
+            перенаправлений почты для ящика на "припаркованном" на Яндексе домене.
+			Синтаксис запроса
+				https://pddimp.yandex.ru/delete_forward.xml ? token =<токен> 
+                & login =<логин пользователя> 
+                & filter_id =<id фильтра>
+        .Link
+			http://api.yandex.ru/pdd/doc/api-pdd/reference/domain-users_delete_forward.xml
+		.Example
+			Remove-Forward -DomainName 'csm.nov.ru' -LName 'mail' -DestLName 'sergei.s.betke';
+	#>
+
+	[CmdletBinding(
+		SupportsShouldProcess=$true
+        , ConfirmImpact="High"
+	)]
+    
+    param (
+		# имя домена, зарегистрированного на сервисах Яндекса
+		[Parameter(
+			Mandatory=$false
+		)]
+        [string]
+		[ValidateScript( { $_ -match "^$($reDomain)$" } )]
+		[Alias("domain_name")]
+		[Alias("Domain")]
+		$DomainName = $DefaultDomain
+	,
+		# авторизационный токен, полученный через Get-Token. Если не указан, то будет использован
+		# последний полученный
+		[Parameter(
+		)]
+        [string]
+		[AllowEmptyString()]
+		$Token
+	,
+		# Учётная запись (lname для создаваемого ящика) на Вашем припаркованном домене
+		[Parameter(
+			Mandatory=$true
+		)]
+        [System.String]
+		[ValidateNotNullOrEmpty()]
+		[Alias("Email")]
+		[Alias("Login")]
+        [Alias("mailNickname")]
+		$LName
+	,
+		# Адрес электронной почты (lname) на том же домене для перенаправления почты 
+		[Parameter(
+			Mandatory=$true
+			, ValueFromPipeline=$true
+		)]
+        [System.String[]]
+		[ValidateNotNullOrEmpty()]
+		$DestLName
+	)
+
+    begin {
+        $Forwards = Get-Forwards `
+			-Token ( Test-Token $DomainName $Token ) `
+			-DomainName $DomainName `
+            -LName $LName `
+        ;
+    }
+	process {
+        $DestLName `
+        | % {
+            $TestLName = $_;
+            $id = (
+                $Forwards `
+                | ? { $_.filter_param -eq "$TestLName@$DomainName" } `
+                | % { $_.id } `
+            );
+            if ( $id ) {
+                Write-Verbose "Удаляемый адресат $_ обнаружен среди перенаправлений для ящика $LName@$DomainName, id=$id.";
+        		Invoke-API `
+        			-method 'delete_forward' `
+        			-Token ( Test-Token $DomainName $Token ) `
+        			-DomainName $DomainName `
+        			-Params @{
+        	            login = $LName;
+                        filter_id = $id;
+        			} `
+        			-IsSuccessPredicate { [bool]$_.SelectSingleNode('page/ok'); } `
+        			-IsFailurePredicate { [bool]$_.page.error } `
+        			-FailureMsgFilter { $_.page.error.reason } `
+        		;
+            } else {
+                Write-Verbose "Удаляемый адресат $_ не обнаружен среди перенаправлений для ящика $LName@$DomainName.";
+            };
+        };
 	}
 }  
 
@@ -1701,6 +1801,7 @@ Export-ModuleMember `
     , Remove-Mailbox `
     , Get-Forwards `
     , New-Forward `
+    , Remove-Forward `
     , New-MailList `
     , Remove-MailList `
 ;

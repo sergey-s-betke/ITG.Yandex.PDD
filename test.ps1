@@ -89,10 +89,24 @@ New-YandexMailList `
 ;
 #>
 <#
-Get-YandexForwards 'test-maillist2' `
+Get-YandexForwards 'postmaster' `
 | % { $_.filter_param } `
 ;
 #>
 #Remove-YandexMailList 'test-maillist', 'test-maillist2';
 
 #Get-YandexMailboxes;
+
+<#
+Remove-YandexForward `
+    -LName 'postmaster' `
+    -DestLName 'sergei.e.gushchin' `
+;
+#>
+New-YandexForward `
+    -LName 'postmaster' `
+    -DestLName 'sergei.e.gushchin' `
+;
+Get-YandexForwards 'postmaster' `
+| % { $_.filter_param } `
+;
