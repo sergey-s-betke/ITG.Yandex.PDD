@@ -1106,7 +1106,7 @@ function Register-User {
             , ParameterSetName="ExtraAccountAttributes"
 		)]
         [System.String]
-		[ValidateNotNullOrEmpty()]
+        [ValidateSet("м", "ж")]
 		$Sex
 	,
 		# передавать домены далее по конвейеру или нет
@@ -1122,6 +1122,11 @@ function Register-User {
             $LName, 
             $Password
         );
+        $Sex = switch ($Sex) {
+            'м' { 1 }
+            'ж' { 2 }
+            default { 0 }
+        };
 		Invoke-API `
 			-method 'api/reg_user' `
 			-Token ( Test-Token $DomainName $Token ) `
@@ -1141,12 +1146,165 @@ function Register-User {
                     password = $Credential.GetNetworkCredential().Password;
                     iname = ( ($FirstName, $MiddleName | ? { $_ } ) -join ' ' );
                     fname = $SecondName;
+                    sex = $Sex;
     			} `
     			-IsSuccessPredicate { [bool]$_.page.ok } `
     			-IsFailurePredicate { [bool]$_.page.error } `
     			-FailureMsgFilter { $_.page.error.reason } `
     		;
         };
+		if ( $PassThru ) { $input };
+	}
+}  
+
+function Edit-User {
+	<#
+		.Component
+			API Яндекс.Почты для доменов
+		.Synopsis
+		    Метод (обёртка над Яндекс.API edit_user) предназначен для редактирования
+            сведений о пользователе ящика на "припаркованном" на Яндексе домене.
+		.Description
+		    Метод (обёртка над Яндекс.API edit_user) предназначен для редактирования
+            сведений о пользователе ящика на "припаркованном" на Яндексе домене.
+			Синтаксис запроса
+                https://pddimp.yandex.ru/edit_user.xml ? 
+                token =<токен>
+                 & login =<логин пользователя>
+                 & [password =<пароль пользователя>]
+                 & [iname =<имя пользователя>]
+                 & [fname =<фамилия пользователя>]
+                 & [sex =<пол пользователя>]
+                 & [hintq =<секретный вопрос>]
+                 & [hinta =<ответ на секретный вопрос>]
+        .Link
+			http://api.yandex.ru/pdd/doc/api-pdd/reference/domain-users_edit_user.xml
+		.Example
+			Edit-User -DomainName 'csm.nov.ru' -Name 'test_user' -Password 'testpassword';
+	#>
+
+	[CmdletBinding(
+		SupportsShouldProcess=$true
+        , ConfirmImpact="High"
+	)]
+    
+    param (
+		# имя домена, зарегистрированного на сервисах Яндекса
+		[Parameter(
+			Mandatory=$false
+			, ValueFromPipelineByPropertyName=$true
+		)]
+        [string]
+		[ValidateScript( { $_ -match "^$($reDomain)$" } )]
+		[Alias("domain_name")]
+		[Alias("Domain")]
+		$DomainName = $DefaultDomain
+	,
+		# авторизационный токен, полученный через Get-Token. Если не указан, то будет использован
+		# последний полученный
+		[Parameter(
+		)]
+        [string]
+		[AllowEmptyString()]
+		$Token
+	,
+		# Учётная запись (lname для создаваемого ящика) на Вашем припаркованном домене
+		[Parameter(
+			Mandatory=$true
+			, ValueFromPipelineByPropertyName=$true
+		)]
+        [System.String]
+		[ValidateNotNullOrEmpty()]
+		[Alias("Email")]
+		[Alias("Login")]
+        [Alias("mailNickname")]
+		$LName
+	,
+		# Пароль к создаваемой учётной записи. Может быть как зашифрованным (SecureString), так и простым текстом
+        #(String)
+		[Parameter(
+			Mandatory=$true
+			, ValueFromPipelineByPropertyName=$true
+		)]
+        [ValidateScript({ 
+            [System.String] `
+            , [System.Security.SecureString] `
+            -contains ( $_.GetType() )
+        })]
+		[ValidateNotNullOrEmpty()]
+		$Password
+	,
+		# Фамилия пользователя
+		[Parameter(
+			Mandatory=$false
+			, ValueFromPipelineByPropertyName=$true
+		)]
+        [System.String]
+		[ValidateNotNullOrEmpty()]
+        [Alias("sn")]
+		$SecondName
+	,
+		# Имя пользователя
+		[Parameter(
+			Mandatory=$false
+			, ValueFromPipelineByPropertyName=$true
+		)]
+        [System.String]
+		[ValidateNotNullOrEmpty()]
+        [Alias("givenName")]
+        [Alias("Name")]
+		$FirstName
+	,
+		# Отчество пользователя
+		[Parameter(
+			Mandatory=$false
+			, ValueFromPipelineByPropertyName=$true
+		)]
+        [System.String]
+		[ValidateNotNull()]
+		$MiddleName
+	,
+		# Пол пользователя
+		[Parameter(
+			Mandatory=$false
+			, ValueFromPipelineByPropertyName=$true
+		)]
+        [System.String]
+        [ValidateSet("м", "ж")]
+		$Sex
+	,
+		# передавать домены далее по конвейеру или нет
+		[switch]
+		$PassThru
+	)
+
+	process {
+        if ( $Password -is [System.String] ) {
+            $Password = ConvertTo-SecureString -String $Password -AsPlainText -Force;
+        };
+        $Credential = New-Object System.Management.Automation.PSCredential( 
+            $LName, 
+            $Password
+        );
+        $Sex = switch ($Sex) {
+            'м' { 1 }
+            'ж' { 2 }
+            default { 0 }
+        };
+		Invoke-API `
+			-method 'edit_user' `
+			-Token ( Test-Token $DomainName $Token ) `
+			-DomainName $DomainName `
+			-Params @{
+	            login = $Credential.GetNetworkCredential().UserName;
+                password = $Credential.GetNetworkCredential().Password;
+                iname = ( ($FirstName, $MiddleName | ? { $_ } ) -join ' ' );
+                fname = $SecondName;
+			} `
+			-IsSuccessPredicate { [bool]$_.page.ok } `
+			-IsFailurePredicate { [bool]$_.page.error } `
+			-FailureMsgFilter { $_.page.error.reason } `
+		;
 		if ( $PassThru ) { $input };
 	}
 }  
@@ -1163,4 +1321,5 @@ Export-ModuleMember `
 	, Register-Admin `
 	, Remove-Admin `
 	, Register-User `
+    , Edit-User `
 ;
