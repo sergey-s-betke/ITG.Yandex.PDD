@@ -1012,7 +1012,7 @@ function Register-User {
 		.Link
 			http://api.yandex.ru/pdd/doc/api-pdd/reference/domain-users_reg_user.xml
 		.Example
-			Register-User -DomainName 'csm.nov.ru' -Name 'test_user' -Password 'testpassword';
+			Register-User -DomainName 'csm.nov.ru' -LName 'test_user' -Password 'testpassword';
 	#>
 
 	[CmdletBinding(
@@ -1180,7 +1180,7 @@ function Edit-User {
         .Link
 			http://api.yandex.ru/pdd/doc/api-pdd/reference/domain-users_edit_user.xml
 		.Example
-			Edit-User -DomainName 'csm.nov.ru' -Name 'test_user' -Password 'testpassword';
+			Edit-User -DomainName 'csm.nov.ru' -LName 'test_user' -Password 'testpassword';
 	#>
 
 	[CmdletBinding(
@@ -1309,6 +1309,80 @@ function Edit-User {
 	}
 }  
 
+function Remove-User {
+	<#
+		.Component
+			API Яндекс.Почты для доменов
+		.Synopsis
+		    Метод (обёртка над Яндекс.API del_user) предназначен для удаления
+            ящика на "припаркованном" на Яндексе домене.
+		.Description
+		    Метод (обёртка над Яндекс.API del_user) предназначен для удаления
+            ящика на "припаркованном" на Яндексе домене.
+			Синтаксис запроса
+				https://pddimp.yandex.ru/api/del_user.xml ? token =<токен> 
+                & domain =<имя домена> & login =<имя почтового ящика>
+        .Link
+			http://api.yandex.ru/pdd/doc/api-pdd/reference/domain-users_del_user.xml
+		.Example
+			Remove-User -DomainName 'csm.nov.ru' -LName 'test_user';
+	#>
+
+	[CmdletBinding(
+		SupportsShouldProcess=$true
+        , ConfirmImpact="High"
+	)]
+    
+    param (
+		# имя домена, зарегистрированного на сервисах Яндекса
+		[Parameter(
+			Mandatory=$false
+			, ValueFromPipelineByPropertyName=$true
+		)]
+        [string]
+		[ValidateScript( { $_ -match "^$($reDomain)$" } )]
+		[Alias("domain_name")]
+		[Alias("Domain")]
+		$DomainName = $DefaultDomain
+	,
+		# авторизационный токен, полученный через Get-Token. Если не указан, то будет использован
+		# последний полученный
+		[Parameter(
+		)]
+        [string]
+		[AllowEmptyString()]
+		$Token
+	,
+		# Учётная запись (lname для создаваемого ящика) на Вашем припаркованном домене
+		[Parameter(
+			Mandatory=$true
+			, ValueFromPipelineByPropertyName=$true
+		)]
+        [System.String]
+		[ValidateNotNullOrEmpty()]
+		[Alias("Email")]
+		[Alias("Login")]
+        [Alias("mailNickname")]
+		$LName
+	,
+		# передавать домены далее по конвейеру или нет
+		[switch]
+		$PassThru
+	)
+
+	process {
+		Invoke-API `
+			-method 'api/del_user' `
+			-Token ( Test-Token $DomainName $Token ) `
+			-DomainName $DomainName `
+			-Params @{
+	            login = $LName;
+			} `
+		;
+		if ( $PassThru ) { $input };
+	}
+}  
+
 Export-ModuleMember `
     Get-Token `
 	, Register-Domain `
@@ -1322,4 +1396,5 @@ Export-ModuleMember `
 	, Remove-Admin `
 	, Register-User `
     , Edit-User `
+    , Remove-User `
 ;
