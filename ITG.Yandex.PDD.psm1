@@ -1383,6 +1383,84 @@ function Remove-User {
 	}
 }  
 
+function Get-Forwards {
+	<#
+		.Component
+			API Яндекс.Почты для доменов
+		.Synopsis
+		    Метод (обёртка над Яндекс.API get_forward_list) предназначен для получения
+            перенаправлений почты для ящика на "припаркованном" на Яндексе домене.
+		.Description
+		    Метод (обёртка над Яндекс.API get_forward_list) предназначен для получения
+            перенаправлений почты для ящика на "припаркованном" на Яндексе домене.
+			Синтаксис запроса
+				https://pddimp.yandex.ru/get_forward_list.xml ? token =<токен> 
+                & login =<логин пользователя>
+        .Link
+			http://api.yandex.ru/pdd/doc/api-pdd/reference/domain-users_get_forward_list.xml
+		.Example
+			Get-Forwards -DomainName 'csm.nov.ru' -LName 'sergei.s.betke';
+	#>
+
+	[CmdletBinding(
+		SupportsShouldProcess=$true
+        , ConfirmImpact="Low"
+	)]
+    
+    param (
+		# имя домена, зарегистрированного на сервисах Яндекса
+		[Parameter(
+			Mandatory=$false
+			, ValueFromPipelineByPropertyName=$true
+		)]
+        [string]
+		[ValidateScript( { $_ -match "^$($reDomain)$" } )]
+		[Alias("domain_name")]
+		[Alias("Domain")]
+		$DomainName = $DefaultDomain
+	,
+		# авторизационный токен, полученный через Get-Token. Если не указан, то будет использован
+		# последний полученный
+		[Parameter(
+		)]
+        [string]
+		[AllowEmptyString()]
+		$Token
+	,
+		# Учётная запись (lname для создаваемого ящика) на Вашем припаркованном домене
+		[Parameter(
+			Mandatory=$true
+			, ValueFromPipelineByPropertyName=$true
+			, Position=0
+		)]
+        [System.String]
+		[ValidateNotNullOrEmpty()]
+		[Alias("Email")]
+		[Alias("Login")]
+        [Alias("mailNickname")]
+		$LName
+	)
+
+	process {
+		Invoke-API `
+			-method 'get_forward_list' `
+			-Token ( Test-Token $DomainName $Token ) `
+			-DomainName $DomainName `
+			-Params @{
+	            login = $LName;
+			} `
+			-IsSuccessPredicate { [bool]$_.page.ok } `
+			-IsFailurePredicate { [bool]$_.page.error } `
+			-FailureMsgFilter { $_.page.error.reason } `
+			-ResultFilter { 
+				@(
+					$_.SelectNodes('page/ok/filters/filter');
+				);
+			} `
+		;
+	}
+}  
+
 Export-ModuleMember `
     Get-Token `
 	, Register-Domain `
@@ -1397,4 +1475,5 @@ Export-ModuleMember `
 	, Register-User `
     , Edit-User `
     , Remove-User `
+    , Get-Forwards `
 ;

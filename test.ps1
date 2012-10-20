@@ -61,6 +61,7 @@ $DomainName `
 | Get-YandexAdmins;
 #>
 
+<#
 @{ lname='testuser'; password='testpassword'; } `
 , @{ lname='testuser2'; password='testpassword2'; } `
 | Select-Object -Property `
@@ -70,4 +71,9 @@ $DomainName `
     , @{ name='givenName'; expression={ 'Иван'; } } `
     , @{ name='middleName'; expression={ 'Иванович' } } `
 | Register-YandexUser `
+;
+#>
+
+Get-YandexForwards 'postmaster' `
+| % { $_.filter_param } `
 ;
