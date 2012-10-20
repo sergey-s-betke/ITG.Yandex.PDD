@@ -489,7 +489,7 @@ function Remove-Domain {
 	}
 }  
 
-function Register-DefaultEmail {
+function Set-DefaultEmail {
 	<#
 		.Component
 			API Яндекс.Почты для доменов
@@ -506,7 +506,7 @@ function Register-DefaultEmail {
 		.Link
 			http://api.yandex.ru/pdd/doc/api-pdd/reference/domain-control_reg_default_user.xml
 		.Example
-			Register-DefaultEmail -DomainName 'csm.nov.ru' -LName 'master';
+			Set-DefaultEmail -DomainName 'csm.nov.ru' -LName 'master';
 	#>
 
 	[CmdletBinding(
@@ -714,7 +714,7 @@ function Remove-Logo {
 	}
 }  
 
-function Get-Emails {
+function Get-Mailboxes {
 	<#
 		.Component
 			API Яндекс.Почты для доменов
@@ -728,7 +728,7 @@ function Get-Emails {
 		.Link
 			http://api.yandex.ru/pdd/doc/api-pdd/reference/domain-control_get_domain_users.xml
 		.Example
-			Get-Emails -DomainName 'csm.nov.ru';
+			Get-Mailboxes -DomainName 'csm.nov.ru';
 	#>
 
 	[CmdletBinding(
@@ -996,7 +996,7 @@ function Remove-Admin {
 	}
 }  
 
-function Register-User {
+function New-Mailbox {
 	<#
 		.Component
 			API Яндекс.Почты для доменов
@@ -1012,7 +1012,7 @@ function Register-User {
 		.Link
 			http://api.yandex.ru/pdd/doc/api-pdd/reference/domain-users_reg_user.xml
 		.Example
-			Register-User -DomainName 'csm.nov.ru' -LName 'test_user' -Password 'testpassword';
+			New-Mailbox -DomainName 'csm.nov.ru' -LName 'test_user' -Password 'testpassword';
 	#>
 
 	[CmdletBinding(
@@ -1122,7 +1122,7 @@ function Register-User {
             $LName, 
             $Password
         );
-        $Sex = switch ($Sex) {
+        $SexDig = switch ($Sex) {
             'м' { 1 }
             'ж' { 2 }
             default { 0 }
@@ -1146,7 +1146,7 @@ function Register-User {
                     password = $Credential.GetNetworkCredential().Password;
                     iname = ( ($FirstName, $MiddleName | ? { $_ } ) -join ' ' );
                     fname = $SecondName;
-                    sex = $Sex;
+                    sex = $SexDig;
     			} `
     			-IsSuccessPredicate { [bool]$_.page.ok } `
     			-IsFailurePredicate { [bool]$_.page.error } `
@@ -1157,7 +1157,7 @@ function Register-User {
 	}
 }  
 
-function Edit-User {
+function Edit-Mailbox {
 	<#
 		.Component
 			API Яндекс.Почты для доменов
@@ -1180,7 +1180,7 @@ function Edit-User {
         .Link
 			http://api.yandex.ru/pdd/doc/api-pdd/reference/domain-users_edit_user.xml
 		.Example
-			Edit-User -DomainName 'csm.nov.ru' -LName 'test_user' -Password 'testpassword';
+			Edit-Mailbox -DomainName 'csm.nov.ru' -LName 'test_user' -Password 'testpassword';
 	#>
 
 	[CmdletBinding(
@@ -1309,7 +1309,7 @@ function Edit-User {
 	}
 }  
 
-function Remove-User {
+function Remove-Mailbox {
 	<#
 		.Component
 			API Яндекс.Почты для доменов
@@ -1325,7 +1325,7 @@ function Remove-User {
         .Link
 			http://api.yandex.ru/pdd/doc/api-pdd/reference/domain-users_del_user.xml
 		.Example
-			Remove-User -DomainName 'csm.nov.ru' -LName 'test_user';
+			Remove-Mailbox -DomainName 'csm.nov.ru' -LName 'test_user';
 	#>
 
 	[CmdletBinding(
@@ -1337,7 +1337,6 @@ function Remove-User {
 		# имя домена, зарегистрированного на сервисах Яндекса
 		[Parameter(
 			Mandatory=$false
-			, ValueFromPipelineByPropertyName=$true
 		)]
         [string]
 		[ValidateScript( { $_ -match "^$($reDomain)$" } )]
@@ -1356,9 +1355,10 @@ function Remove-User {
 		# Учётная запись (lname для создаваемого ящика) на Вашем припаркованном домене
 		[Parameter(
 			Mandatory=$true
-			, ValueFromPipelineByPropertyName=$true
+			, ValueFromPipeline=$true
+            , Position = 0
 		)]
-        [System.String]
+        [System.String[]]
 		[ValidateNotNullOrEmpty()]
 		[Alias("Email")]
 		[Alias("Login")]
@@ -1371,14 +1371,17 @@ function Remove-User {
 	)
 
 	process {
-		Invoke-API `
-			-method 'api/del_user' `
-			-Token ( Test-Token $DomainName $Token ) `
-			-DomainName $DomainName `
-			-Params @{
-	            login = $LName;
-			} `
-		;
+        $LName `
+		| % {
+            Invoke-API `
+    			-method 'api/del_user' `
+    			-Token ( Test-Token $DomainName $Token ) `
+    			-DomainName $DomainName `
+    			-Params @{
+    	            login = $_;
+    			} `
+    		;
+        };
 		if ( $PassThru ) { $input };
 	}
 }  
@@ -1461,19 +1464,243 @@ function Get-Forwards {
 	}
 }  
 
+function New-Forward {
+	<#
+		.Component
+			API Яндекс.Почты для доменов
+		.Synopsis
+		    Метод (обёртка над Яндекс.API set_forward) предназначен для создания
+            перенаправлений почты для ящика на "припаркованном" на Яндексе домене.
+		.Description
+		    Метод (обёртка над Яндекс.API set_forward) предназначен для создания
+            перенаправлений почты для ящика на "припаркованном" на Яндексе домене.
+			Синтаксис запроса
+				https://pddimp.yandex.ru/set_forward.xml ? token =<токен> 
+                & login =<логин пользователя> 
+                & address =<e-mail для пересылки> 
+                & copy =<признак сохранения исходников>
+        .Link
+			http://api.yandex.ru/pdd/doc/api-pdd/reference/domain-users_set_forward.xml
+		.Example
+			New-Forward -DomainName 'csm.nov.ru' -LName 'mail' -DestLName 'sergei.s.betke';
+	#>
+
+	[CmdletBinding(
+		SupportsShouldProcess=$true
+        , ConfirmImpact="Medium"
+	)]
+    
+    param (
+		# имя домена, зарегистрированного на сервисах Яндекса
+		[Parameter(
+			Mandatory=$false
+		)]
+        [string]
+		[ValidateScript( { $_ -match "^$($reDomain)$" } )]
+		[Alias("domain_name")]
+		[Alias("Domain")]
+		$DomainName = $DefaultDomain
+	,
+		# авторизационный токен, полученный через Get-Token. Если не указан, то будет использован
+		# последний полученный
+		[Parameter(
+		)]
+        [string]
+		[AllowEmptyString()]
+		$Token
+	,
+		# Учётная запись (lname для создаваемого ящика) на Вашем припаркованном домене
+		[Parameter(
+			Mandatory=$true
+		)]
+        [System.String]
+		[ValidateNotNullOrEmpty()]
+		[Alias("Email")]
+		[Alias("Login")]
+        [Alias("mailNickname")]
+		$LName
+	,
+		# Адрес электронной почты (lname) на том же домене для перенаправления почты 
+		[Parameter(
+			Mandatory=$true
+			, ValueFromPipeline=$true
+		)]
+        [System.String[]]
+		[ValidateNotNullOrEmpty()]
+		$DestLName
+	)
+
+	process {
+		Invoke-API `
+			-method 'set_forward' `
+			-Token ( Test-Token $DomainName $Token ) `
+			-DomainName $DomainName `
+			-Params @{
+	            login = $LName;
+                address = "$DestLName@$DomainName";
+                copy = 'yes';
+			} `
+			-IsSuccessPredicate { [bool]$_.SelectSingleNode('page/ok'); } `
+			-IsFailurePredicate { [bool]$_.page.error } `
+			-FailureMsgFilter { $_.page.error.reason } `
+		;
+	}
+}  
+
+function New-MailList {
+	<#
+		.Component
+			API Яндекс.Почты для доменов
+		.Synopsis
+		    Учитывая, что в API нет методов для управления рассылками, реализуем имитацию
+            через создание ящика и перенаправлений к нему.
+		.Description
+		    Учитывая, что в API нет методов для управления рассылками, реализуем имитацию
+            через создание ящика и перенаправлений к нему.
+		.Link
+			New-Mailbox
+		.Example
+			New-MailList -DomainName 'csm.nov.ru' -LName 'postmaster' -Members 'sergei.s.betke';
+	#>
+
+	[CmdletBinding(
+		SupportsShouldProcess=$true
+        , ConfirmImpact="Medium"
+	)]
+    
+    param (
+		# имя домена, зарегистрированного на сервисах Яндекса
+		[Parameter(
+			Mandatory=$false
+		)]
+        [string]
+		[ValidateScript( { $_ -match "^$($reDomain)$" } )]
+		[Alias("domain_name")]
+		[Alias("Domain")]
+		$DomainName = $DefaultDomain
+	,
+		# авторизационный токен, полученный через Get-Token. Если не указан, то будет использован
+		# последний полученный
+		[Parameter(
+		)]
+        [string]
+		[AllowEmptyString()]
+		$Token
+	,
+		# Учётная запись (lname для создаваемого ящика) на Вашем припаркованном домене
+		[Parameter(
+			Mandatory=$true
+		)]
+        [System.String]
+		[ValidateNotNullOrEmpty()]
+		[Alias("Email")]
+		$LName
+	,
+		[Parameter(
+			Mandatory=$false
+			, ValueFromPipeline=$true
+		)]
+        [System.String[]]
+		$Member = @()
+	)
+
+    begin {
+        New-Mailbox `
+            -DomainName $DomainName `
+            -Token $Token `
+            -LName $LName `
+            -Password "maillist-password" `
+        ;
+    }
+    process {
+        $Member `
+        | New-Forward `
+            -DomainName $DomainName `
+            -Token $Token `
+            -LName $LName `
+        ;
+	}
+}  
+
+function Remove-MailList {
+	<#
+		.Component
+			API Яндекс.Почты для доменов
+		.Synopsis
+		    Метод предназначен для удаления группы рассылки
+            ящика на "припаркованном" на Яндексе домене.
+		.Description
+		    Метод предназначен для удаления группы рассылки
+            ящика на "припаркованном" на Яндексе домене.
+        .Link
+            Remove-Mailbox
+		.Example
+			Remove-MailList -DomainName 'csm.nov.ru' -LName 'test_maillist';
+	#>
+
+	[CmdletBinding(
+		SupportsShouldProcess=$true
+        , ConfirmImpact="High"
+	)]
+    
+    param (
+		# имя домена, зарегистрированного на сервисах Яндекса
+		[Parameter(
+			Mandatory=$false
+		)]
+        [string]
+		[ValidateScript( { $_ -match "^$($reDomain)$" } )]
+		[Alias("domain_name")]
+		[Alias("Domain")]
+		$DomainName = $DefaultDomain
+	,
+		# авторизационный токен, полученный через Get-Token. Если не указан, то будет использован
+		# последний полученный
+		[Parameter(
+		)]
+        [string]
+		[AllowEmptyString()]
+		$Token
+	,
+		# Учётная запись (lname для создаваемого ящика) на Вашем припаркованном домене
+		[Parameter(
+			Mandatory=$true
+			, ValueFromPipeline=$true
+            , Position = 0
+		)]
+        [System.String[]]
+		[ValidateNotNullOrEmpty()]
+		[Alias("Email")]
+		[Alias("Login")]
+        [Alias("mailNickname")]
+		$LName
+	)
+
+	process {
+        Remove-Mailbox `
+            -DomainName $DomainName `
+            -Token $Token `
+            -LName $LName `
+		;
+	}
+}  
+
 Export-ModuleMember `
     Get-Token `
 	, Register-Domain `
 	, Remove-Domain `
-	, Register-DefaultEmail `
+	, Set-DefaultEmail `
 	, Set-Logo `
 	, Remove-Logo `
-	, Get-Emails `
+	, Get-Mailboxes `
 	, Get-Admins `
 	, Register-Admin `
 	, Remove-Admin `
-	, Register-User `
-    , Edit-User `
-    , Remove-User `
+	, New-Mailbox `
+    , Edit-Mailbox `
+    , Remove-Mailbox `
     , Get-Forwards `
+    , New-Forward `
+    , New-MailList `
+    , Remove-MailList `
 ;

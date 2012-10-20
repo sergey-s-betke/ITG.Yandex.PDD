@@ -37,8 +37,6 @@ $DomainName `
 
 # Remove-YandexDomain -DomainName $DomainName;
 
-# Get-YandexEmails;
-
 <#
 $DomainName `
 | Remove-YandexLogo -PassThru `
@@ -70,10 +68,31 @@ $DomainName `
     , @{ name='sn'; expression={ 'Иванов'; } } `
     , @{ name='givenName'; expression={ 'Иван'; } } `
     , @{ name='middleName'; expression={ 'Иванович' } } `
-| Register-YandexUser `
+| New-YandexMailbox `
 ;
 #>
 
-Get-YandexForwards 'postmaster' `
+<#
+'sergei.s.betke' `
+, 'sergei.e.gushchin' `
+| New-YandexMailList `
+    -DomainName 'csm.nov.ru' `
+    -LName 'test-maillist' `
+;
+#>
+<#
+New-YandexMailList `
+    -DomainName 'csm.nov.ru' `
+    -LName 'test-maillist2' `
+    -Member 'sergei.s.betke', 'sergei.e.gushchin' `
+
+;
+#>
+<#
+Get-YandexForwards 'test-maillist2' `
 | % { $_.filter_param } `
 ;
+#>
+#Remove-YandexMailList 'test-maillist', 'test-maillist2';
+
+#Get-YandexMailboxes;
