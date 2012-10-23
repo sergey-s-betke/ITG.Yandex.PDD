@@ -1800,6 +1800,73 @@ function Remove-MailList {
 			-LName $LName `
 		;
 	}
+}
+
+function New-GeneralMailList {
+	<#
+		.Component
+			API Яндекс.Почты для доменов
+		.Synopsis
+			Создание группы рассылки, включающей всех пользователей домена. Обёртка
+			над create_general_maillist.
+		.Description
+			Создание группы рассылки, включающей всех пользователей домена. Обёртка
+			над create_general_maillist.
+			Синтаксис запроса:
+				https://pddimp.yandex.ru/api/create_general_maillist.xml ? token =<токен> 
+				& domain =<имя домена> 
+				& ml_name =<имя рассылки>
+		.Link
+			http://api.yandex.ru/pdd/doc/api-pdd/reference/maillist_create_general_maillist.xml
+		.Example
+			New-GeneralMailList -DomainName 'csm.nov.ru' -LName 'all';
+	#>
+
+	[CmdletBinding(
+		SupportsShouldProcess=$true
+		, ConfirmImpact="Medium"
+	)]
+	
+	param (
+		# имя домена, зарегистрированного на сервисах Яндекса
+		[Parameter(
+			Mandatory=$false
+		)]
+		[string]
+		[ValidateScript( { $_ -match "^$($reDomain)$" } )]
+		[Alias("domain_name")]
+		[Alias("Domain")]
+		$DomainName = $DefaultDomain
+	,
+		# авторизационный токен, полученный через Get-Token. Если не указан, то будет использован
+		# последний полученный
+		[Parameter(
+		)]
+		[string]
+		[AllowEmptyString()]
+		$Token
+	,
+		# Учётная запись (lname для создаваемого ящика) на Вашем припаркованном домене
+		[Parameter(
+			Mandatory=$false,
+			Position=0
+		)]
+		[System.String]
+		[ValidateNotNullOrEmpty()]
+		[Alias("Email")]
+		$LName = 'all'
+	)
+
+	process {
+		Invoke-API `
+			-method 'api/create_general_maillist' `
+			-Token ( Test-Token $DomainName $Token ) `
+			-DomainName $DomainName `
+			-Params @{
+				ml_name = $LName;
+			} `
+		;
+	}
 }  
 
 Export-ModuleMember `
@@ -1821,4 +1888,5 @@ Export-ModuleMember `
 	, Remove-Forward `
 	, New-MailList `
 	, Remove-MailList `
+	, New-GeneralMailList `
 ;
