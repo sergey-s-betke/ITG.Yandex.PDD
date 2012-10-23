@@ -1110,50 +1110,67 @@ function New-Mailbox {
 		[ValidateSet("м", "ж")]
 		$Sex
 	,
+		# перезаписывать ли реквизиты существующих ящиков
+		[switch]
+		$Force
+	,
 		# передавать домены далее по конвейеру или нет
 		[switch]
 		$PassThru
 	)
 
+	begin {
+		$Mailboxes = @( Get-Mailboxes -DomainName $DomainName -Token $Token );
+	}
 	process {
-		if ( $Password -is [System.String] ) {
-			$Password = ConvertTo-SecureString -String $Password -AsPlainText -Force;
+		if ( $Password -is [System.Security.SecureString] ) {
+			$Credential = New-Object System.Management.Automation.PSCredential( 
+				$LName, 
+				$Password
+			);
+			$Password = $Credential.GetNetworkCredential().Password;
 		};
-		$Credential = New-Object System.Management.Automation.PSCredential( 
-			$LName, 
-			$Password
-		);
 		$SexDig = switch ($Sex) {
 			'м' { 1 }
 			'ж' { 2 }
 			default { 0 }
 		};
-		Invoke-API `
-			-method 'api/reg_user' `
-			-Token ( Test-Token $DomainName $Token ) `
-			-DomainName $DomainName `
-			-Params @{
-				login = $Credential.GetNetworkCredential().UserName;
-				passwd = $Credential.GetNetworkCredential().Password;
-			} `
-		;
-		if ( $PsCmdlet.ParameterSetName -eq 'ExtraAccountAttributes' ) {
-			Invoke-API `
-				-method 'edit_user' `
-				-Token ( Test-Token $DomainName $Token ) `
-				-DomainName $DomainName `
-				-Params @{
-					login = $Credential.GetNetworkCredential().UserName;
-					password = $Credential.GetNetworkCredential().Password;
-					iname = ( ($FirstName, $MiddleName | ? { $_ } ) -join ' ' );
-					fname = $SecondName;
-					sex = $SexDig;
-				} `
-				-IsSuccessPredicate { [bool]$_.page.ok } `
-				-IsFailurePredicate { [bool]$_.page.error } `
-				-FailureMsgFilter { $_.page.error.reason } `
-			;
+		$IsMailboxExists = $Mailboxes -contains $LName;
+		if ( $IsMailboxExists -and ( -not $Force ) ) {
+			Write-Error "Создаваемый ящик $LName на домене $DomainName уже существует. Для переопределения его реквизитов используйте параметр -Force.";
+		} else {
+			if ( -not $IsMailboxExists ) {
+				Write-Verbose "Создаваемый ящик $LName на домене $DomainName не существует - создаём.";
+				Invoke-API `
+					-method 'api/reg_user' `
+					-Token ( Test-Token $DomainName $Token ) `
+					-DomainName $DomainName `
+					-Params @{
+						login = $LName;
+						passwd = $Password;
+					} `
+				;
+			};
+			if ( $PsCmdlet.ParameterSetName -eq 'ExtraAccountAttributes' ) {
+				Write-Verbose "Изменяем реквизиты ящика $LName на домене $DomainName.";
+				Invoke-API `
+					-method 'edit_user' `
+					-Token ( Test-Token $DomainName $Token ) `
+					-DomainName $DomainName `
+					-Params @{
+						login = $LName;
+						passwd = $Password;
+						iname = ( ($FirstName, $MiddleName | ? { $_ } ) -join ' ' );
+						fname = $SecondName;
+						sex = $SexDig;
+					} `
+					-IsSuccessPredicate { [bool]$_.page.ok } `
+					-IsFailurePredicate { [bool]$_.page.error } `
+					-FailureMsgFilter { $_.page.error.reason } `
+				;
+			};
 		};
+		
 		if ( $PassThru ) { $input };
 	}
 }  
@@ -1280,25 +1297,26 @@ function Edit-Mailbox {
 	)
 
 	process {
-		if ( $Password -is [System.String] ) {
-			$Password = ConvertTo-SecureString -String $Password -AsPlainText -Force;
+		if ( $Password -is [System.Security.SecureString] ) {
+			$Credential = New-Object System.Management.Automation.PSCredential( 
+				$LName, 
+				$Password
+			);
+			$Password = $Credential.GetNetworkCredential().Password;
 		};
-		$Credential = New-Object System.Management.Automation.PSCredential( 
-			$LName, 
-			$Password
-		);
 		$Sex = switch ($Sex) {
 			'м' { 1 }
 			'ж' { 2 }
 			default { 0 }
 		};
+		Write-Verbose "Изменяем реквизиты ящика $LName на домене $DomainName.";
 		Invoke-API `
 			-method 'edit_user' `
 			-Token ( Test-Token $DomainName $Token ) `
 			-DomainName $DomainName `
 			-Params @{
-				login = $Credential.GetNetworkCredential().UserName;
-				password = $Credential.GetNetworkCredential().Password;
+				login = $LName;
+				passwd = $Password;
 				iname = ( ($FirstName, $MiddleName | ? { $_ } ) -join ' ' );
 				fname = $SecondName;
 			} `
