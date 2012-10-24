@@ -532,12 +532,6 @@ function Set-DefaultEmail {
 			-IsSuccessPredicate { [bool]$_.action.status.'action-status'.get_item('success') } `
 			-IsFailurePredicate { [bool]$_.action.status.'action-status'.get_item('error') } `
 			-FailureMsgFilter { $_.action.status.'action-status'.error.'#text' } `
-			-ResultFilter { 
-				$_.action.domains.domain `
-				| Select-Object -Property `
-					@{Name='DomainName'; Expression={$_.name}}`
-					, @{Name='DefaultEmail'; Expression={$_.'default-email'}} `
-			} `
 		;
 	}
 }  
@@ -1618,6 +1612,9 @@ function New-MailList {
 	,
 		[switch]
 		$Force
+	,
+		[switch]
+		$PassThru
 	)
 
 	begin {
@@ -1652,6 +1649,7 @@ function New-MailList {
 			-DomainName $DomainName `
 			-MailListLName $MailListLName `
 		;
+		if ( $PassThru ) { return $input };
 	}
 }  
 
