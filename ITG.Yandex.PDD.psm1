@@ -4,19 +4,8 @@
 | Import-Module;
 
 Set-Variable `
-	-Name DefaultDomain `
-	-Value ([string]'') `
-	-Scope Global `
-;
-Set-Variable `
-	-Name DefaultToken `
-	-Value ([string]'') `
-	-Scope Global `
-;
-
-Set-Variable `
-	-Name APIRoot `
-	-Option Constant `
+	-Name 'APIRoot' `
+	-Option 'Constant' `
 	-Value 'https://pddimp.yandex.ru' `
 ;
 
@@ -61,11 +50,10 @@ function Get-Token {
 		[ValidateScript( { $_ -match "^$($reDomain)$" } )]
 		[Alias("domain_name")]
 		[Alias("Domain")]
-		$DomainName = $DefaultDomain
+		$DomainName
 	)
 
 	process {
-		$global:DefaultDomain = $DomainName;
 		$get_tokenURI = [System.Uri]"$APIRoot/get_token.xml?domain_name=$( [System.Uri]::EscapeDataString( $DomainName ) )";
 		$get_tokenAuthURI = [System.Uri]"https://passport.yandex.ru/passport?mode=auth&msg=pdd&retpath=$( [System.Uri]::EscapeDataString( $get_tokenURI ) )";
 
@@ -94,8 +82,7 @@ function Get-Token {
 			if ( $res.ok ) {
 				$token = [System.String]$res.ok.token;
 				Write-Verbose "Получили токен для домена $($DomainName): $token.";
-				$token;
-				$global:DefaultToken = $token;
+				return $token;
 			} else {
 				$errMsg = $res.error.reason;
 				Write-Error `
@@ -115,7 +102,12 @@ function Get-Token {
 	}
 };
 
-function Test-Token {
+Set-Variable `
+	-Name 'TokenForDomain' `
+	-Value (@{}) `
+;
+
+function Get-CachedToken {
 	<#
 		.Component
 			API Яндекс.Почты для доменов
@@ -130,7 +122,7 @@ function Test-Token {
 		.Link
 			Get-Token
 		.Example
-			$token = Test-Token -DomainName 'yourdomain.ru';
+			$token = Get-CachedToken -DomainName 'yourdomain.ru';
 	#>
 
 	[CmdletBinding()]
@@ -144,21 +136,13 @@ function Test-Token {
 		[ValidateScript( { $_ -match "^$($reDomain)$" } )]
 		[Alias("domain_name")]
 		[Alias("Domain")]
-		$DomainName = $DefaultDomain
-	,
-		# авторизационный токен, полученный через Get-Token. Если не указан, то будет запрошен автоматически
-		# через вызов Get-Token
-		[Parameter(
-			Position = 1
-		)]
-		[string]
-		$Token
+		$DomainName
 	)
 
-	if ( ( $DomainName -eq $DefaultDomain ) -and ( $DefaultToken ) ) {
-		$DefaultToken;
+	if ( $TokenForDomain.ContainsKey( $DomainName ) ) {
+		return $TokenForDomain.$DomainName;
 	} else {
-		Get-Token -DomainName $DomainName;
+		return $TokenForDomain.$DomainName = Get-Token -DomainName $DomainName;
 	};
 };
 
@@ -189,7 +173,6 @@ function Invoke-API {
 	,
 		# авторизационный токен, полученный через Get-Token.
 		[Parameter(
-			Mandatory=$true
 		)]
 		[string]
 		$Token
@@ -244,6 +227,9 @@ function Invoke-API {
 		$UnknownErrorMsg = "Неизвестная ошибка при вызове метода API $method для домена $DomainName."
 	)
 
+	if ( -not $Token ) {
+		$Token = Get-CachedToken $DomainName;
+	};
 	$Params.Add( 'token', $Token );
 	$Params.Add( 'domain', $DomainName );
 	
@@ -338,6 +324,7 @@ $($Params.$param)
 				Write-Verbose $SuccessMsg;
 				& $ResultFilter;
 			} elseif ( & $IsFailurePredicate ) {
+				Write-Verbose "Ответ API $method: $($resString).";
 				Write-Error `
 					-Message "$FailureMsg - ($( & $FailureMsgFilter ))" `
 					-Category CloseError `
@@ -345,6 +332,7 @@ $($Params.$param)
 					-RecommendedAction 'Проверьте правильность указания домена и Ваши права на домен.' `
 				;
 			} else { # недиагностируемая ошибка вызова API
+				Write-Verbose "Ответ API $method: $($resString).";
 				Write-Error `
 					-Message $UnknownErrorMsg `
 					-Category InvalidResult `
@@ -353,6 +341,7 @@ $($Params.$param)
 				;
 			};
 		} catch {
+			Write-Verbose "Ответ API $method: $($resString).";
 			Write-Error `
 				-Message "$UnknownErrorMsg ($($_.Exception.Message))." `
 				-Category InvalidOperation `
@@ -398,21 +387,22 @@ function Register-Domain {
 		[ValidateScript( { $_ -match "^$($reDomain)$" } )]
 		[Alias("domain_name")]
 		[Alias("Domain")]
-		$DomainName = $DefaultDomain
+		$DomainName
 	,
 		# авторизационный токен, полученный через Get-Token. Если не указан, то будет использован
 		# последний полученный
 		[Parameter(
+			Mandatory=$true
 		)]
 		[string]
-		[AllowEmptyString()]
+		[ValidateNotNullOrEmpty()]
 		$Token
 	)
 
 	process {
 		Invoke-API `
 			-method 'api/reg_domain' `
-			-Token ( Test-Token $DomainName $Token ) `
+			-Token $Token `
 			-DomainName $DomainName `
 			-SuccessMsg "Домен $($DomainName) успешно подключен." `
 			-ResultFilter { 
@@ -464,14 +454,6 @@ function Remove-Domain {
 		[Alias("Domain")]
 		$DomainName
 	,
-		# авторизационный токен, полученный через Get-Token. Если не указан, то будет использован
-		# последний полученный
-		[Parameter(
-		)]
-		[string]
-		[AllowEmptyString()]
-		$Token
-	,
 		# передавать домены далее по конвейеру или нет
 		[switch]
 		$PassThru
@@ -480,7 +462,6 @@ function Remove-Domain {
 	process {
 		Invoke-API `
 			-method 'api/del_domain' `
-			-Token ( Test-Token $DomainName $Token ) `
 			-DomainName $DomainName `
 			-SuccessMsg "Домен $($DomainName) успешно отключен." `
 		;
@@ -524,15 +505,7 @@ function Set-DefaultEmail {
 		[ValidateScript( { $_ -match "^$($reDomain)$" } )]
 		[Alias("domain_name")]
 		[Alias("Domain")]
-		$DomainName = $DefaultDomain
-	,
-		# авторизационный токен, полученный через Get-Token. Если не указан, то будет использован
-		# последний полученный
-		[Parameter(
-		)]
-		[string]
-		[AllowEmptyString()]
-		$Token
+		$DomainName
 	,
 		# имя почтового ящика. Ящик с именем lname должен уже существовать
 		[Parameter(
@@ -552,7 +525,6 @@ function Set-DefaultEmail {
 	process {
 		Invoke-API `
 			-method 'api/reg_default_user' `
-			-Token ( Test-Token $DomainName $Token ) `
 			-DomainName $DomainName `
 			-Params @{
 				login = $LName
@@ -607,15 +579,7 @@ function Set-Logo {
 		[ValidateScript( { $_ -match "^$($reDomain)$" } )]
 		[Alias("domain_name")]
 		[Alias("Domain")]
-		$DomainName = $DefaultDomain
-	,
-		# авторизационный токен, полученный через Get-Token. Если не указан, то будет запрошен автоматически
-		# через вызов Get-Token
-		[Parameter(
-		)]
-		[string]
-		[AllowEmptyString()]
-		$Token
+		$DomainName
 	,
 		# путь к файлу логотипа.
 		# Поддерживаются графические файлы форматов jpg, gif, png размером до 2 Мбайт
@@ -635,7 +599,6 @@ function Set-Logo {
 		Invoke-API `
 			-HttpMethod 'POST' `
 			-method 'api/add_logo' `
-			-Token ( Test-Token $DomainName $Token ) `
 			-DomainName $DomainName `
 			-Params @{
 				file = $Path
@@ -687,15 +650,7 @@ function Remove-Logo {
 		[ValidateScript( { $_ -match "^$($reDomain)$" } )]
 		[Alias("domain_name")]
 		[Alias("Domain")]
-		$DomainName = $DefaultDomain
-	,
-		# авторизационный токен, полученный через Get-Token. Если не указан, то будет запрошен автоматически
-		# через вызов Get-Token
-		[Parameter(
-		)]
-		[string]
-		[AllowEmptyString()]
-		$Token
+		$DomainName
 	,
 		# передавать домены далее по конвейеру или нет
 		[switch]
@@ -705,7 +660,6 @@ function Remove-Logo {
 	process {
 		Invoke-API `
 			-method 'api/del_logo' `
-			-Token ( Test-Token $DomainName $Token ) `
 			-DomainName $DomainName `
 			-SuccessMsg "Логотип для домена $($DomainName) удалён." `
 		;
@@ -746,21 +700,12 @@ function Get-Mailboxes {
 		[ValidateScript( { $_ -match "^$($reDomain)$" } )]
 		[Alias("domain_name")]
 		[Alias("Domain")]
-		$DomainName = $DefaultDomain
-	,
-		# авторизационный токен, полученный через Get-Token. Если не указан, то будет использован
-		# последний полученный
-		[Parameter(
-		)]
-		[string]
-		[AllowEmptyString()]
-		$Token
+		$DomainName
 	)
 
 	process {
 		Invoke-API `
 			-method 'get_domain_users' `
-			-Token ( Test-Token $DomainName $Token ) `
 			-DomainName $DomainName `
 			-Params @{
 				on_page = 1000; 
@@ -810,21 +755,12 @@ function Get-Admins {
 		[ValidateScript( { $_ -match "^$($reDomain)$" } )]
 		[Alias("domain_name")]
 		[Alias("Domain")]
-		$DomainName = $DefaultDomain
-	,
-		# авторизационный токен, полученный через Get-Token. Если не указан, то будет использован
-		# последний полученный
-		[Parameter(
-		)]
-		[string]
-		[AllowEmptyString()]
-		$Token
+		$DomainName
 	)
 
 	process {
 		Invoke-API `
 			-method 'api/multiadmin/get_admins' `
-			-Token ( Test-Token $DomainName $Token ) `
 			-DomainName $DomainName `
 			-IsSuccessPredicate { [bool]$_.SelectSingleNode('action/domain/status/success') } `
 			-IsFailurePredicate { [bool]$_.SelectSingleNode('action/domain/status/error') } `
@@ -870,15 +806,7 @@ function Register-Admin {
 		[ValidateScript( { $_ -match "^$($reDomain)$" } )]
 		[Alias("domain_name")]
 		[Alias("Domain")]
-		$DomainName = $DefaultDomain
-	,
-		# авторизационный токен, полученный через Get-Token. Если не указан, то будет использован
-		# последний полученный
-		[Parameter(
-		)]
-		[string]
-		[AllowEmptyString()]
-		$Token
+		$DomainName
 	,
 		# Логин дополнительного администратора на @yandex.ru
 		[Parameter(
@@ -901,7 +829,6 @@ function Register-Admin {
 	process {
 		Invoke-API `
 			-method 'api/multiadmin/add_admin' `
-			-Token ( Test-Token $DomainName $Token ) `
 			-DomainName $DomainName `
 			-Params @{
 				login = $Credential
@@ -947,15 +874,7 @@ function Remove-Admin {
 		[ValidateScript( { $_ -match "^$($reDomain)$" } )]
 		[Alias("domain_name")]
 		[Alias("Domain")]
-		$DomainName = $DefaultDomain
-	,
-		# авторизационный токен, полученный через Get-Token. Если не указан, то будет использован
-		# последний полученный
-		[Parameter(
-		)]
-		[string]
-		[AllowEmptyString()]
-		$Token
+		$DomainName
 	,
 		# Логин дополнительного администратора на @yandex.ru
 		[Parameter(
@@ -978,7 +897,6 @@ function Remove-Admin {
 	process {
 		Invoke-API `
 			-method 'api/multiadmin/del_admin' `
-			-Token ( Test-Token $DomainName $Token ) `
 			-DomainName $DomainName `
 			-Params @{
 				login = $Credential
@@ -1025,15 +943,7 @@ function New-Mailbox {
 		[ValidateScript( { $_ -match "^$($reDomain)$" } )]
 		[Alias("domain_name")]
 		[Alias("Domain")]
-		$DomainName = $DefaultDomain
-	,
-		# авторизационный токен, полученный через Get-Token. Если не указан, то будет использован
-		# последний полученный
-		[Parameter(
-		)]
-		[string]
-		[AllowEmptyString()]
-		$Token
+		$DomainName
 	,
 		# Учётная запись (lname для создаваемого ящика) на Вашем припаркованном домене
 		[Parameter(
@@ -1113,7 +1023,7 @@ function New-Mailbox {
 	)
 
 	begin {
-		$Mailboxes = @( Get-Mailboxes -DomainName $DomainName -Token $Token );
+		$Mailboxes = @( Get-Mailboxes -DomainName $DomainName );
 	}
 	process {
 		if ( $Password -is [System.Security.SecureString] ) {
@@ -1136,7 +1046,6 @@ function New-Mailbox {
 				Write-Verbose "Создаваемый ящик $LName на домене $DomainName не существует - создаём.";
 				Invoke-API `
 					-method 'api/reg_user' `
-					-Token ( Test-Token $DomainName $Token ) `
 					-DomainName $DomainName `
 					-Params @{
 						login = $LName;
@@ -1148,7 +1057,6 @@ function New-Mailbox {
 				Write-Verbose "Изменяем реквизиты ящика $LName на домене $DomainName.";
 				Invoke-API `
 					-method 'edit_user' `
-					-Token ( Test-Token $DomainName $Token ) `
 					-DomainName $DomainName `
 					-Params @{
 						login = $LName;
@@ -1209,15 +1117,7 @@ function Edit-Mailbox {
 		[ValidateScript( { $_ -match "^$($reDomain)$" } )]
 		[Alias("domain_name")]
 		[Alias("Domain")]
-		$DomainName = $DefaultDomain
-	,
-		# авторизационный токен, полученный через Get-Token. Если не указан, то будет использован
-		# последний полученный
-		[Parameter(
-		)]
-		[string]
-		[AllowEmptyString()]
-		$Token
+		$DomainName
 	,
 		# Учётная запись (lname для создаваемого ящика) на Вашем припаркованном домене
 		[Parameter(
@@ -1304,7 +1204,6 @@ function Edit-Mailbox {
 		Write-Verbose "Изменяем реквизиты ящика $LName на домене $DomainName.";
 		Invoke-API `
 			-method 'edit_user' `
-			-Token ( Test-Token $DomainName $Token ) `
 			-DomainName $DomainName `
 			-Params @{
 				login = $LName;
@@ -1353,15 +1252,7 @@ function Remove-Mailbox {
 		[ValidateScript( { $_ -match "^$($reDomain)$" } )]
 		[Alias("domain_name")]
 		[Alias("Domain")]
-		$DomainName = $DefaultDomain
-	,
-		# авторизационный токен, полученный через Get-Token. Если не указан, то будет использован
-		# последний полученный
-		[Parameter(
-		)]
-		[string]
-		[AllowEmptyString()]
-		$Token
+		$DomainName
 	,
 		# Учётная запись (lname для создаваемого ящика) на Вашем припаркованном домене
 		[Parameter(
@@ -1386,7 +1277,6 @@ function Remove-Mailbox {
 		| % {
 			Invoke-API `
 				-method 'api/del_user' `
-				-Token ( Test-Token $DomainName $Token ) `
 				-DomainName $DomainName `
 				-Params @{
 					login = $_;
@@ -1430,15 +1320,7 @@ function Get-MailListMembers {
 		[ValidateScript( { $_ -match "^$($reDomain)$" } )]
 		[Alias("domain_name")]
 		[Alias("Domain")]
-		$DomainName = $DefaultDomain
-	,
-		# авторизационный токен, полученный через Get-Token. Если не указан, то будет использован
-		# последний полученный
-		[Parameter(
-		)]
-		[string]
-		[AllowEmptyString()]
-		$Token
+		$DomainName
 	,
 		# Учётная запись (lname для создаваемого ящика) на Вашем припаркованном домене
 		[Parameter(
@@ -1458,7 +1340,6 @@ function Get-MailListMembers {
 	process {
 		Invoke-API `
 			-method 'get_forward_list' `
-			-Token ( Test-Token $DomainName $Token ) `
 			-DomainName $DomainName `
 			-Params @{
 				login = $MailListLName;
@@ -1467,7 +1348,7 @@ function Get-MailListMembers {
 			-IsFailurePredicate { [bool]$_.page.error } `
 			-FailureMsgFilter { $_.page.error.reason } `
 			-ResultFilter { 
-				$_.page.ok.filters.filter `
+				$_.SelectNodes('page/ok/filters/filter') `
 				| %{ $_.filter_param; } `
 				| %{ 
 					$temp = $_ -match $reMailAddr;
@@ -1513,15 +1394,7 @@ function New-MailListMember {
 		[ValidateScript( { $_ -match "^$($reDomain)$" } )]
 		[Alias("domain_name")]
 		[Alias("Domain")]
-		$DomainName = $DefaultDomain
-	,
-		# авторизационный токен, полученный через Get-Token. Если не указан, то будет использован
-		# последний полученный
-		[Parameter(
-		)]
-		[string]
-		[AllowEmptyString()]
-		$Token
+		$DomainName
 	,
 		# Учётная запись (lname для создаваемого ящика) на Вашем припаркованном домене
 		[Parameter(
@@ -1538,7 +1411,7 @@ function New-MailListMember {
 			, ValueFromPipeline=$true
 			, ValueFromPipelineByPropertyName=$true
 		)]
-		[System.String[]]
+		[System.String]
 		[ValidateNotNullOrEmpty()]
 		[Alias("Email")]
 		[Alias("Login")]
@@ -1550,21 +1423,30 @@ function New-MailListMember {
 		$PassThru
 	)
 
-	process {
-		$res = Invoke-API `
-			-method 'set_forward' `
-			-Token ( Test-Token $DomainName $Token ) `
+	begin {
+		$MailListMembers = Get-MailListMembers `
 			-DomainName $DomainName `
-			-Params @{
-				login = $MailListLName;
-				address = "$LName@$DomainName";
-				copy = 'yes';
-			} `
-			-IsSuccessPredicate { [bool]$_.SelectSingleNode('page/ok'); } `
-			-IsFailurePredicate { [bool]$_.page.error } `
-			-FailureMsgFilter { $_.page.error.reason } `
+			-MailListLName $MailListLName `
 		;
-		if ( $PassThru ) { $input } else { $res };
+	}
+	process {
+		$LName `
+		| ? { $MailListMembers -notcontains $_ } `
+		| % {
+			$res = Invoke-API `
+				-method 'set_forward' `
+				-DomainName $DomainName `
+				-Params @{
+					login = $MailListLName;
+					address = "$_@$DomainName";
+					copy = 'yes';
+				} `
+				-IsSuccessPredicate { [bool]$_.SelectSingleNode('page/ok'); } `
+				-IsFailurePredicate { [bool]$_.page.error } `
+				-FailureMsgFilter { $_.page.error.reason } `
+			;
+		};
+		if ( $PassThru ) { return $input };
 	}
 }  
 
@@ -1602,15 +1484,7 @@ function Remove-MailListMember {
 		[ValidateScript( { $_ -match "^$($reDomain)$" } )]
 		[Alias("domain_name")]
 		[Alias("Domain")]
-		$DomainName = $DefaultDomain
-	,
-		# авторизационный токен, полученный через Get-Token. Если не указан, то будет использован
-		# последний полученный
-		[Parameter(
-		)]
-		[string]
-		[AllowEmptyString()]
-		$Token
+		$DomainName
 	,
 		# Учётная запись (lname для создаваемого ящика) на Вашем припаркованном домене
 		[Parameter(
@@ -1642,7 +1516,6 @@ function Remove-MailListMember {
 	begin {
 		$MailListMembers = Invoke-API `
 			-method 'get_forward_list' `
-			-Token ( Test-Token $DomainName $Token ) `
 			-DomainName $DomainName `
 			-Params @{
 				login = $MailListLName;
@@ -1670,7 +1543,6 @@ function Remove-MailListMember {
 				Write-Verbose "Удаляемый адресат $_ обнаружен среди перенаправлений для ящика $MailListLName@$DomainName, id=$id.";
 				Invoke-API `
 					-method 'delete_forward' `
-					-Token ( Test-Token $DomainName $Token ) `
 					-DomainName $DomainName `
 					-Params @{
 						login = $MailListLName;
@@ -1722,15 +1594,7 @@ function New-MailList {
 		[ValidateScript( { $_ -match "^$($reDomain)$" } )]
 		[Alias("domain_name")]
 		[Alias("Domain")]
-		$DomainName = $DefaultDomain
-	,
-		# авторизационный токен, полученный через Get-Token. Если не указан, то будет использован
-		# последний полученный
-		[Parameter(
-		)]
-		[string]
-		[AllowEmptyString()]
-		$Token
+		$DomainName
 	,
 		# Учётная запись (lname для создаваемого ящика) на Вашем припаркованном домене
 		[Parameter(
@@ -1751,43 +1615,41 @@ function New-MailList {
 		[Alias("Login")]
 		[Alias("mailNickname")]
 		$LName = @()
+	,
+		[switch]
+		$Force
 	)
 
 	begin {
-		if ( 
-			( 	
-				Get-Mailboxes `
-					-Token ( Test-Token $DomainName $Token ) `
-					-DomainName $DomainName `
-			) -contains $MailListLName
-		) {
-			Write-Error "Невозможно создать группу рассылки $MailListLName для домена $DomainName: группа или ящик с таким адресом уже существуют.";
-		} else {
+		if ( $IsNewMailList = ( Get-Mailboxes -DomainName $DomainName ) -notcontains $MailListLName	) {
 			Invoke-API `
 				-method 'api/create_general_maillist' `
-				-Token ( Test-Token $DomainName $Token ) `
 				-DomainName $DomainName `
 				-Params @{
 					ml_name = $MailListLName;
 				} `
 			;
 			Sleep -Milliseconds 2500; # даём время Яндексу добавить в эту группу все адреса, чтобы потом их убить
+		};
+		if ( $IsMailboxExists -or $Force ) {
+			if ( -not $IsNewMailList ) {
+				Write-Verbose "Группу рассылки $MailListLName для домена $DomainName уже существует, переопределяем членов группы рассылки.";
+			};
 			Get-MailListMembers `
 				-DomainName $DomainName `
-				-Token $Token `
 				-MailListLName $MailListLName `
 			| Remove-MailListMember `
 				-DomainName $DomainName `
-				-Token $Token `
 				-MailListLName $MailListLName `
 			;
+		} else {
+			Write-Error "Невозможно создать группу рассылки $MailListLName для домена $DomainName: группа или ящик с таким адресом уже существуют.";
 		};
 	}
 	process {
 		$LName `
 		| New-MailListMember `
 			-DomainName $DomainName `
-			-Token $Token `
 			-MailListLName $MailListLName `
 		;
 	}
@@ -1827,15 +1689,7 @@ function Remove-MailList {
 		[ValidateScript( { $_ -match "^$($reDomain)$" } )]
 		[Alias("domain_name")]
 		[Alias("Domain")]
-		$DomainName = $DefaultDomain
-	,
-		# авторизационный токен, полученный через Get-Token. Если не указан, то будет использован
-		# последний полученный
-		[Parameter(
-		)]
-		[string]
-		[AllowEmptyString()]
-		$Token
+		$DomainName
 	,
 		# Адрес (без домена, lname) удаляемой группы рассылки на Вашем припаркованном домене
 		[Parameter(
@@ -1852,7 +1706,6 @@ function Remove-MailList {
 	process {
 		Invoke-API `
 			-method 'api/delete_general_maillist' `
-			-Token ( Test-Token $DomainName $Token ) `
 			-DomainName $DomainName `
 			-Params @{
 				ml_name = $MailListLName;
@@ -1861,7 +1714,6 @@ function Remove-MailList {
 		;
 		Remove-Mailbox `
 			-DomainName $DomainName `
-			-Token $Token `
 			-LName $MailListLName `
 		;
 	}
