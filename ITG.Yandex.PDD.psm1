@@ -1639,17 +1639,22 @@ function New-MailList {
 				-DomainName $DomainName `
 				-MailListLName $MailListLName `
 			;
+		$NewMailListMember = ( {
+			& (get-command New-MailListMember) `
+				-DomainName $DomainName `
+				-MailListLName $MailListLName `
+		} ).GetSteppablePipeline();
+		$NewMailListMember.Begin( $true );
 		} else {
 			Write-Error "Невозможно создать группу рассылки $MailListLName для домена $DomainName: группа или ящик с таким адресом уже существуют.";
 		};
 	}
 	process {
-		$LName `
-		| New-MailListMember `
-			-DomainName $DomainName `
-			-MailListLName $MailListLName `
-		;
+		$NewMailListMember.Process( $LName );
 		if ( $PassThru ) { return $input };
+	}
+	end {
+		$NewMailListMember.End();
 	}
 }  
 
