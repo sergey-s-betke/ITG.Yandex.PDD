@@ -1254,7 +1254,7 @@ function Remove-Mailbox {
 			, ValueFromPipeline=$true
 			, Position = 0
 		)]
-		[System.String[]]
+		[System.String]
 		[ValidateNotNullOrEmpty()]
 		[Alias("Email")]
 		[Alias("Login")]
@@ -1267,16 +1267,13 @@ function Remove-Mailbox {
 	)
 
 	process {
-		$LName `
-		| % {
-			Invoke-API `
-				-method 'api/del_user' `
-				-DomainName $DomainName `
-				-Params @{
-					login = $_;
-				} `
-			;
-		};
+		Invoke-API `
+			-method 'api/del_user' `
+			-DomainName $DomainName `
+			-Params @{
+				login = $LName;
+			} `
+		;
 		if ( $PassThru ) { $input };
 	}
 }  
@@ -1424,15 +1421,13 @@ function New-MailListMember {
 		;
 	}
 	process {
-		$LName `
-		| ? { $MailListMembers -notcontains $_ } `
-		| % {
+		if ( $MailListMembers -notcontains $LName ) {
 			$res = Invoke-API `
 				-method 'set_forward' `
 				-DomainName $DomainName `
 				-Params @{
 					login = $MailListLName;
-					address = "$_@$DomainName";
+					address = "$LName@$DomainName";
 					copy = 'yes';
 				} `
 				-IsSuccessPredicate { [bool]$_.SelectSingleNode('page/ok'); } `
@@ -1495,7 +1490,7 @@ function Remove-MailListMember {
 			, ValueFromPipeline=$true
 			, ValueFromPipelineByPropertyName=$true
 		)]
-		[System.String[]]
+		[System.String]
 		[ValidateNotNullOrEmpty()]
 		[Alias("Email")]
 		[Alias("Login")]
@@ -1525,30 +1520,29 @@ function Remove-MailListMember {
 		;
 	}
 	process {
-		$LName `
-		| % {
-			$TestLName = $_;
-			$id = (
-				$MailListMembers `
-				| ? { $_.filter_param -eq "$TestLName@$DomainName" } `
-				| % { $_.id } `
-			);
-			if ( $id ) {
-				Write-Verbose "Удаляемый адресат $_ обнаружен среди перенаправлений для ящика $MailListLName@$DomainName, id=$id.";
+		$id = (
+			$MailListMembers `
+			| ? { $_.filter_param -eq "$LName@$DomainName" } `
+			| % { $_.id } `
+		);
+		if ( $id ) {
+			Write-Verbose "Удаляемый адресат $LName обнаружен среди перенаправлений для ящика $MailListLName@$DomainName, id=$id.";
+			$id `
+			| % {
 				Invoke-API `
 					-method 'delete_forward' `
 					-DomainName $DomainName `
 					-Params @{
 						login = $MailListLName;
-						filter_id = $id;
+						filter_id = $_;
 					} `
 					-IsSuccessPredicate { [bool]$_.SelectSingleNode('page/ok'); } `
 					-IsFailurePredicate { [bool]$_.page.error } `
 					-FailureMsgFilter { $_.page.error.reason } `
 				;
-			} else {
-				Write-Verbose "Удаляемый адресат $_ не обнаружен среди перенаправлений для ящика $MailListLName@$DomainName.";
 			};
+		} else {
+			Write-Verbose "Удаляемый адресат $LName не обнаружен среди перенаправлений для ящика $MailListLName@$DomainName.";
 		};
 		if ( $PassThru ) { $input };
 	}
@@ -1590,7 +1584,7 @@ function New-MailList {
 		[Alias("Domain")]
 		$DomainName
 	,
-		# Учётная запись (lname для создаваемого ящика) на Вашем припаркованном домене
+		# Учётная запись (lname для создаваемой группы рассылки) на Вашем припаркованном домене
 		[Parameter(
 			Mandatory=$true
 		)]
@@ -1599,16 +1593,17 @@ function New-MailList {
 		[Alias("MailList")]
 		$MailListLName
 	,
+		# Учётная запись (lname для ящиков) на Вашем припаркованном домене, которые должны быть включены в создаваемую группу рассылки
 		[Parameter(
 			Mandatory=$false
 			, ValueFromPipeline=$true
 			, ValueFromPipelineByPropertyName=$true
 		)]
-		[System.String[]]
+		[System.String]
 		[Alias("Email")]
 		[Alias("Login")]
 		[Alias("mailNickname")]
-		$LName = @()
+		$LName
 	,
 		[switch]
 		$Force
@@ -1619,6 +1614,7 @@ function New-MailList {
 
 	begin {
 		if ( $IsNewMailList = ( Get-Mailboxes -DomainName $DomainName ) -notcontains $MailListLName	) {
+			# Яндекс не предоставил API для создания групп рассылки, кроме general
 			Invoke-API `
 				-method 'api/create_general_maillist' `
 				-DomainName $DomainName `
@@ -1626,9 +1622,9 @@ function New-MailList {
 					ml_name = $MailListLName;
 				} `
 			;
-			Sleep -Milliseconds 2500; # даём время Яндексу добавить в эту группу все адреса, чтобы потом их убить
+			Start-Sleep -Milliseconds 3000; # дождёмся, пока Яндекс остановит асинхронный процесс добавления ящиков в группу
 		};
-		if ( $IsMailboxExists -or $Force ) {
+		if ( $IsNewMailList -or $Force ) {
 			if ( -not $IsNewMailList ) {
 				Write-Verbose "Группу рассылки $MailListLName для домена $DomainName уже существует, переопределяем членов группы рассылки.";
 			};
@@ -1639,18 +1635,21 @@ function New-MailList {
 				-DomainName $DomainName `
 				-MailListLName $MailListLName `
 			;
-		$NewMailListMember = ( {
-			& (get-command New-MailListMember) `
-				-DomainName $DomainName `
-				-MailListLName $MailListLName `
-		} ).GetSteppablePipeline();
-		$NewMailListMember.Begin( $true );
 		} else {
 			Write-Error "Невозможно создать группу рассылки $MailListLName для домена $DomainName: группа или ящик с таким адресом уже существуют.";
 		};
+		$NewMailListMember = ( {
+			& (Get-Command New-MailListMember) `
+				-DomainName $DomainName `
+				-MailListLName $MailListLName `
+			;
+		} ).GetSteppablePipeline();
+		$NewMailListMember.Begin( $true );
 	}
 	process {
-		$NewMailListMember.Process( $LName );
+		if ( $LName ) {
+			$NewMailListMember.Process( $LName );
+		};
 		if ( $PassThru ) { return $input };
 	}
 	end {
@@ -1713,11 +1712,12 @@ function Remove-MailList {
 			-Params @{
 				ml_name = $MailListLName;
 			} `
-			-IsFailurePredicate { -not $_.SelectSingleNode('action/status/success') } `
+			-IsSuccessPredicate { -not $_.SelectSingleNode('action/status/error') } `
 		;
 		Remove-Mailbox `
 			-DomainName $DomainName `
 			-LName $MailListLName `
+			-ErrorAction SilentlyContinue `
 		;
 	}
 }
