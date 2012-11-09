@@ -1,6 +1,7 @@
 ﻿'ITG.WinAPI.User32' `
 , 'ITG.WinAPI.UrlMon' `
 , 'ITG.RegExps' `
+, 'ITG.Utils' `
 | Import-Module;
 
 Set-Variable `
@@ -1722,6 +1723,106 @@ function Remove-MailList {
 	}
 }
 
+function ConvertTo-Contact {
+	<#
+		.Component
+			API Яндекс.Почты для доменов
+		.Synopsis
+			Преобразует объект в конвейере в объект со свойствами контакта Яндекс.
+		.Description
+			Исходный объект должен обладать реквизитами контакта в соостветствии со схемой AD.
+			Выходной объект уже будет обладать реквизитами контакта, ожидаемыми при импорте csv файла в ящик на Яндексе.
+		.Link
+			http://api.yandex.ru/pdd/doc/api-pdd/reference/maillist_delete_general_maillist.xml
+		.Example
+			Get-ADUser `
+			| ConvertTo-Contact `
+			| Export-Csv;
+	#>
+
+	[CmdletBinding(
+		SupportsShouldProcess=$true
+		, ConfirmImpact="Low"
+	)]
+	
+	param (
+		# Фамилия
+		[Parameter(
+			Mandatory=$false
+			, ValueFromPipelineByPropertyName=$true
+			, ParameterSetName="ContactProperties"
+		)]
+		[System.String]
+		[ValidateNotNullOrEmpty()]
+		[Alias("sn")]
+		[Alias("SecondName")]
+		[Alias("LastName")]
+		$Фамилия
+	,
+		# Имя
+		[Parameter(
+			Mandatory=$false
+			, ValueFromPipelineByPropertyName=$true
+			, ParameterSetName="ContactProperties"
+		)]
+		[System.String]
+		[ValidateNotNullOrEmpty()]
+		[Alias("givenName")]
+		[Alias("FirstName")]
+		$Имя
+	,
+		# Отчество
+		[Parameter(
+			Mandatory=$false
+			, ValueFromPipelineByPropertyName=$true
+			, ParameterSetName="ContactProperties"
+		)]
+		[System.String]
+		[Alias("MiddleName")]
+		$Отчество
+	,
+		# дата рождения
+		[Parameter(
+			Mandatory=$false
+			, ValueFromPipelineByPropertyName=$true
+			, ParameterSetName="ContactProperties"
+		)]
+		[System.DateTime]
+		[Alias("Birthday")]
+		${День Рождения}
+	,
+		# телефон рабочий
+		[Parameter(
+			Mandatory=$false
+			, ValueFromPipelineByPropertyName=$true
+			, ParameterSetName="ContactProperties"
+		)]
+		[System.String]
+		[Alias("telephoneNumber")]
+		[Alias("BusinessTelephoneNumber")]
+		${Рабочий телефон}
+	,
+		# адрес электронной почты
+		[Parameter(
+			Mandatory=$false
+			, ValueFromPipelineByPropertyName=$true
+			, ParameterSetName="ContactProperties"
+		)]
+		[System.String]
+		[Alias("mail")]
+		[Alias("Email1Address")]
+		${Адрес эл. почты}
+	)
+
+	process {
+		$PSBoundParameters `
+		| Get-Pair `
+		| ? { (Get-Command ConvertTo-Contact).Parameters.($_.Key).ParameterSets.ContainsKey('contactProperties') } `
+		| Add-CustomMember `
+		;
+	}
+}  
+
 Export-ModuleMember `
 	Get-Token `
 	, Register-Domain `
@@ -1741,4 +1842,5 @@ Export-ModuleMember `
 	, Remove-MailListMember `
 	, New-MailList `
 	, Remove-MailList `
+	, ConvertTo-Contact `
 ;
