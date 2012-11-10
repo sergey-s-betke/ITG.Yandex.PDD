@@ -3,17 +3,14 @@
 
 	url = git@github.com:sergey-s-betke/ITG.RegExps.git
 
-[submodule "ITG.WinAPI.User32"]
-
-	path = ITG.WinAPI.User32
-
-	url = git@github.com:sergey-s-betke/ITG.WinAPI.User32.git
-
-[submodule "ITG.WinAPI.UrlMon"]
-
-	path = ITG.WinAPI.UrlMon
-
-	url = git@github.com:sergey-s-betke/ITG.WinAPI.UrlMon.git
 [submodule "ITG.Utils"]
+
 	path = ITG.Utils
+
 	url = git@github.com:sergey-s-betke/ITG.Utils.git
+
+[submodule "ITG.Yandex"]
+
+	path = ITG.Yandex
+
+	url = git@github.com:sergey-s-betke/ITG.Yandex.git
