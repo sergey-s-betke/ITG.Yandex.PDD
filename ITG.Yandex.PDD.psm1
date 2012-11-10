@@ -1291,12 +1291,12 @@ function New-MailList {
 			Write-Error "Невозможно создать группу рассылки $MailListLName для домена $DomainName: группа или ящик с таким адресом уже существуют.";
 		};
 		$NewMailListMember = ( {
-			& (Get-Command New-MailListMember) `
+			New-MailListMember `
 				-DomainName $DomainName `
 				-MailListLName $MailListLName `
 			;
-		} ).GetSteppablePipeline();
-		$NewMailListMember.Begin( $true );
+		} ).GetSteppablePipeline( $myInvocation.CommandOrigin );
+		$NewMailListMember.Begin( $PSCmdlet );
 	}
 	process {
 		if ( $LName ) {
