@@ -1732,12 +1732,10 @@ function ConvertTo-Contact {
 		.Description
 			Исходный объект должен обладать реквизитами контакта в соостветствии со схемой AD.
 			Выходной объект уже будет обладать реквизитами контакта, ожидаемыми при импорте csv файла в ящик на Яндексе.
-		.Link
-			http://api.yandex.ru/pdd/doc/api-pdd/reference/maillist_delete_general_maillist.xml
 		.Example
 			Get-ADUser `
 			| ConvertTo-Contact `
-			| Export-Csv;
+			| Export-Csv 'ya.csv';
 	#>
 
 	[CmdletBinding(
@@ -1817,8 +1815,8 @@ function ConvertTo-Contact {
 	process {
 		$PSBoundParameters `
 		| ConvertFrom-Dictionary `
-		| ? { (Get-Command ConvertTo-Contact).Parameters.($_.Key).ParameterSets.ContainsKey('contactProperties') } `
-		| ConvertTo-PSObject `
+		| ? { (Get-Command ConvertTo-Contact).Parameters.($_.Key).ParameterSets.ContainsKey('ContactProperties') } `
+		| ConvertTo-PSObject -PassThru `
 		;
 	}
 }
