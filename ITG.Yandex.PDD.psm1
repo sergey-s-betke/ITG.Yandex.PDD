@@ -242,14 +242,14 @@ function Invoke-API {
 			) -join '&';
 			$apiURI = [System.Uri]"$APIRoot/$method.xml?$escapedParams";
 			$wc = New-Object System.Net.WebClient;
-			$WebMethodFunctional = { 
+			$WebMethodFunctional = {
 				$wc.DownloadString( $apiURI );
 			};
 		}
 		( [System.Net.WebRequestMethods+HTTP]::Post ) {
 			$apiURI = [System.Uri] ( "$APIRoot/$method.xml" );
 			
-			$WebMethodFunctional = { 
+			$WebMethodFunctional = {
 				$wreq = [System.Net.WebRequest]::Create( $apiURI );
 				$wreq.Method = $HttpMethod;
 				$boundary = "##params-boundary##";
@@ -260,7 +260,7 @@ function Invoke-API {
 				
 				foreach( $param in $Params.keys ) {
 					if ( $Params.$param -is [System.IO.FileInfo] ) {
-	   					$writer.Write( @"
+						$writer.Write( @"
 --$boundary
 Content-Disposition: form-data; name="$param"; filename="$($Params.$param.Name)"
 Content-Type: $(Get-MIME ($Params.$param))
@@ -270,7 +270,7 @@ Content-Transfer-Encoding: binary
 "@
 						);
 						$fs = New-Object System.IO.FileStream (
-							$Params.$param.FullName, 
+							$Params.$param.FullName,
 							[System.IO.FileMode]::Open,
 							[System.IO.FileAccess]::Read,
 							[system.IO.FileShare]::Read
@@ -350,7 +350,7 @@ $($Params.$param)
 			;
 		};
 	};
-}  
+}
 
 function Register-Domain {
 	<#
@@ -415,7 +415,7 @@ function Register-Domain {
 			} `
 		;
 	}
-}  
+}
 
 function Remove-Domain {
 	<#
@@ -468,7 +468,7 @@ function Remove-Domain {
 		;
 		if ( $PassThru ) { $input };
 	}
-}  
+}
 
 function Set-DefaultEmail {
 	<#
@@ -535,7 +535,7 @@ function Set-DefaultEmail {
 			-FailureMsgFilter { $_.action.status.'action-status'.error.'#text' } `
 		;
 	}
-}  
+}
 
 function Set-Logo {
 	<#
@@ -605,7 +605,7 @@ function Set-Logo {
 		;
 		if ( $PassThru ) { $input };
 	}
-}  
+}
 
 function Remove-Logo {
 	<#
@@ -660,7 +660,7 @@ function Remove-Logo {
 		;
 		if ( $PassThru ) { $input };
 	}
-}  
+}
 
 function Get-Mailboxes {
 	<#
@@ -670,7 +670,7 @@ function Get-Mailboxes {
 			Метод (обёртка над Яндекс.API get_domain_users) Метод позволяет получить список почтовых ящиков.
 		.Description
 			Метод (обёртка над Яндекс.API get_domain_users) Метод позволяет получить список почтовых ящиков.
-			Метод возвращает список ящиков в домене, привязанном к токену. 
+			Метод возвращает список ящиков в домене, привязанном к токену.
 			Синтаксис запроса
 				https://pddimp.yandex.ru/get_domain_users.xml ? token =<токен> & on_page =<число записей на странице> & page =<номер страницы>
 		.Link
@@ -715,7 +715,7 @@ function Get-Mailboxes {
 			} `
 		;
 	}
-}  
+}
 
 function Get-Admins {
 	<#
@@ -725,7 +725,7 @@ function Get-Admins {
 			Метод (обёртка над Яндекс.API get_admins). Метод позволяет получить список дополнительных администраторов домена.
 		.Description
 			Метод (обёртка над Яндекс.API get_admins). Метод позволяет получить список дополнительных администраторов домена.
-			Метод возвращает список дополнительных администраторов для домена, привязанного к токену. 
+			Метод возвращает список дополнительных администраторов для домена, привязанного к токену.
 			Синтаксис запроса
 				https://pddimp.yandex.ru/api/multiadmin/get_admins.xml ? token =<токен> & domain =<имя домена>
 		.Link
@@ -766,7 +766,7 @@ function Get-Admins {
 			} `
 		;
 	}
-}  
+}
 
 function Register-Admin {
 	<#
@@ -834,7 +834,7 @@ function Register-Admin {
 		;
 		if ( $PassThru ) { $input };
 	}
-}  
+}
 
 function Remove-Admin {
 	<#
@@ -902,7 +902,7 @@ function Remove-Admin {
 		;
 		if ( $PassThru ) { $input };
 	}
-}  
+}
 
 function New-Mailbox {
 	<#
@@ -958,7 +958,7 @@ function New-Mailbox {
 			Mandatory=$true
 			, ValueFromPipelineByPropertyName=$true
 		)]
-		[ValidateScript({ 
+		[ValidateScript({
 			[System.String] `
 			, [System.Security.SecureString] `
 			-contains ( $_.GetType() )
@@ -1069,7 +1069,7 @@ function New-Mailbox {
 		
 		if ( $PassThru ) { $input };
 	}
-}  
+}
 
 function Edit-Mailbox {
 	<#
@@ -1082,7 +1082,7 @@ function Edit-Mailbox {
 			Метод (обёртка над Яндекс.API edit_user) предназначен для редактирования
 			сведений о пользователе ящика на "припаркованном" на Яндексе домене.
 			Синтаксис запроса
-				https://pddimp.yandex.ru/edit_user.xml ? 
+				https://pddimp.yandex.ru/edit_user.xml ?
 				token =<токен>
 				 & login =<логин пользователя>
 				 & [password =<пароль пользователя>]
@@ -1132,7 +1132,7 @@ function Edit-Mailbox {
 			Mandatory=$true
 			, ValueFromPipelineByPropertyName=$true
 		)]
-		[ValidateScript({ 
+		[ValidateScript({
 			[System.String] `
 			, [System.Security.SecureString] `
 			-contains ( $_.GetType() )
@@ -1212,7 +1212,7 @@ function Edit-Mailbox {
 		;
 		if ( $PassThru ) { $input };
 	}
-}  
+}
 
 function Remove-Mailbox {
 	<#
@@ -1225,7 +1225,7 @@ function Remove-Mailbox {
 			Метод (обёртка над Яндекс.API del_user) предназначен для удаления
 			ящика на "припаркованном" на Яндексе домене.
 			Синтаксис запроса
-				https://pddimp.yandex.ru/api/del_user.xml ? token =<токен> 
+				https://pddimp.yandex.ru/api/del_user.xml ? token =<токен>
 				& domain =<имя домена> & login =<имя почтового ящика>
 		.Link
 			http://api.yandex.ru/pdd/doc/api-pdd/reference/domain-users_del_user.xml
@@ -1277,7 +1277,7 @@ function Remove-Mailbox {
 		;
 		if ( $PassThru ) { $input };
 	}
-}  
+}
 
 function Get-MailListMembers {
 	<#
@@ -1290,7 +1290,7 @@ function Get-MailListMembers {
 			Метод (обёртка над Яндекс.API get_forward_list) предназначен для получения
 			перенаправлений почты для ящика на "припаркованном" на Яндексе домене.
 			Синтаксис запроса
-				https://pddimp.yandex.ru/get_forward_list.xml ? token =<токен> 
+				https://pddimp.yandex.ru/get_forward_list.xml ? token =<токен>
 				& login =<логин пользователя>
 		.Link
 			http://api.yandex.ru/pdd/doc/api-pdd/reference/domain-users_get_forward_list.xml
@@ -1342,14 +1342,14 @@ function Get-MailListMembers {
 			-ResultFilter { 
 				$_.SelectNodes('page/ok/filters/filter') `
 				| %{ $_.filter_param; } `
-				| %{ 
+				| %{
 					$temp = $_ -match $reMailAddr;
 					$matches['lname'];
 				} `
 			} `
 		;
 	}
-}  
+}
 
 function New-MailListMember {
 	<#
@@ -1362,9 +1362,9 @@ function New-MailListMember {
 			Метод (обёртка над Яндекс.API set_forward) предназначен для создания
 			перенаправлений почты для ящика на "припаркованном" на Яндексе домене.
 			Синтаксис запроса
-				https://pddimp.yandex.ru/set_forward.xml ? token =<токен> 
-				& login =<логин пользователя> 
-				& address =<e-mail для пересылки> 
+				https://pddimp.yandex.ru/set_forward.xml ? token =<токен>
+				& login =<логин пользователя>
+				& address =<e-mail для пересылки>
 				& copy =<признак сохранения исходников>
 		.Link
 			http://api.yandex.ru/pdd/doc/api-pdd/reference/domain-users_set_forward.xml
@@ -1397,7 +1397,7 @@ function New-MailListMember {
 		[Alias("MailList")]
 		$MailListLName
 	,
-		# Адрес электронной почты (lname) на том же домене для перенаправления почты 
+		# Адрес электронной почты (lname) на том же домене для перенаправления почты
 		[Parameter(
 			Mandatory=$true
 			, ValueFromPipeline=$true
@@ -1438,7 +1438,7 @@ function New-MailListMember {
 		};
 		if ( $PassThru ) { return $input };
 	}
-}  
+}
 
 function Remove-MailListMember {
 	<#
@@ -1451,8 +1451,8 @@ function Remove-MailListMember {
 			Метод (обёртка над Яндекс.API delete_forward) предназначен для удаления
 			перенаправлений почты для ящика на "припаркованном" на Яндексе домене.
 			Синтаксис запроса
-				https://pddimp.yandex.ru/delete_forward.xml ? token =<токен> 
-				& login =<логин пользователя> 
+				https://pddimp.yandex.ru/delete_forward.xml ? token =<токен>
+				& login =<логин пользователя>
 				& filter_id =<id фильтра>
 		.Link
 			http://api.yandex.ru/pdd/doc/api-pdd/reference/domain-users_delete_forward.xml
@@ -1485,7 +1485,7 @@ function Remove-MailListMember {
 		[Alias("MailList")]
 		$MailListLName
 	,
-		# Адрес электронной почты (lname) на том же домене для перенаправления почты 
+		# Адрес электронной почты (lname) на том же домене для перенаправления почты
 		[Parameter(
 			Mandatory=$true
 			, ValueFromPipeline=$true
@@ -1547,7 +1547,7 @@ function Remove-MailListMember {
 		};
 		if ( $PassThru ) { $input };
 	}
-}  
+}
 
 function New-MailList {
 	<#
@@ -1560,8 +1560,8 @@ function New-MailList {
 			Создание группы рассылки, включающей всех пользователей домена. Обёртка
 			над create_general_maillist.
 			Синтаксис запроса:
-				https://pddimp.yandex.ru/api/create_general_maillist.xml ? token =<токен> 
-				& domain =<имя домена> 
+				https://pddimp.yandex.ru/api/create_general_maillist.xml ? token =<токен>
+				& domain =<имя домена>
 				& ml_name =<имя рассылки>
 		.Link
 			http://api.yandex.ru/pdd/doc/api-pdd/reference/maillist_create_general_maillist.xml
@@ -1656,7 +1656,7 @@ function New-MailList {
 	end {
 		$NewMailListMember.End();
 	}
-}  
+}
 
 function Remove-MailList {
 	<#
@@ -1669,7 +1669,7 @@ function Remove-MailList {
 			Метод предназначен для удаления группы рассылки на "припаркованном" на Яндексе домене.
 			Обёртка для delete_general_maillist.
 			Синтаксис запроса:
-				https://pddimp.yandex.ru/api/delete_general_maillist.xml ? token =<токен> 
+				https://pddimp.yandex.ru/api/delete_general_maillist.xml ? token =<токен>
 				& domain =<имя домена>
 				& ml_name =<имя рассылки>
 		.Link
@@ -1816,12 +1816,12 @@ function ConvertTo-Contact {
 
 	process {
 		$PSBoundParameters `
-		| Get-Pair `
+		| ConvertFrom-Dictionary `
 		| ? { (Get-Command ConvertTo-Contact).Parameters.($_.Key).ParameterSets.ContainsKey('contactProperties') } `
-		| Add-CustomMember `
+		| ConvertTo-PSObject `
 		;
 	}
-}  
+}
 
 Export-ModuleMember `
 	Get-Token `
