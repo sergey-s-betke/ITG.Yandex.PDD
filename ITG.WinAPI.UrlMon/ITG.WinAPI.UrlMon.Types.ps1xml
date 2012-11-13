@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Types>
+    <Type>
+        <Name>System.IO.FileInfo</Name>
+        <Members>
+            <ScriptProperty>
+                <Name>ContentType</Name>
+                <GetScriptBlock>
+                    Get-MIME -Path $this;
+                </GetScriptBlock>
+            </ScriptProperty>
+            <AliasProperty>
+                <Name>MIMEContentType</Name>
+                <ReferencedMemberName>ContentType</ReferencedMemberName>
+            </AliasProperty>
+<!--
+            <MemberSet>
+                <Name>PSStandardMembers</Name>
+                <Members>
+                    <PropertySet>
+                        <Name>DefaultDisplayPropertySet</Name>
+                        <ReferencedProperties>
+                            <Name>LastWriteTime</Name>
+                            <Name>Length</Name>
+                            <Name>Name</Name>
+                        </ReferencedProperties>
+                    </PropertySet>
+                </Members>
+            </MemberSet>
+-->
+        </Members>
+    </Type>
+</Types>
