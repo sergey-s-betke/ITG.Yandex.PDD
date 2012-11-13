@@ -17,30 +17,30 @@ Import-Module `
         -path ( ( [System.IO.FileInfo] ( $myinvocation.mycommand.path ) ).directory ) `
         -childPath 'ITG.Yandex.PDD' `
     ) `
-	-Prefix Yandex `
 	-Force `
-;
+	-PassThru `
+| Get-Readme -OutDefaultFile;
 
-$Token = Get-YandexToken $DomainName -ErrorAction Stop;
+#$Token = Get-Token $DomainName -ErrorAction Stop;
 
 <#
 $DomainName `
-| Register-YandexDomain `
+| Register-Domain `
 | Add-Member `
 	-MemberType NoteProperty `
 	-Name DefaultEmail `
 	-Value 'master' `
 	-PassThru `
-| Register-YandexDefaultEmail `
+| Register-DefaultEmail `
 ;
 #>
 
-# Remove-YandexDomain -DomainName $DomainName;
+# Remove-Domain -DomainName $DomainName;
 
 <#
 $DomainName `
-| Remove-YandexLogo -PassThru `
-| Set-YandexLogo `
+| Remove-Logo -PassThru `
+| Set-Logo `
     -Path (join-path `
         -path ( ( [System.IO.FileInfo] ( $myinvocation.mycommand.path ) ).directory ) `
         -childPath 'ITG.WinAPI.UrlMon\test\logo.jpg' `
@@ -50,13 +50,13 @@ $DomainName `
 
 <#
 'csm.nov.ru' `
-| Register-YandexAdmin 'sergei.e.gushchin' -PassThru `
-| Get-YandexAdmins;
+| Register-Admin 'sergei.e.gushchin' -PassThru `
+| Get-Admins;
 #>
 <#
 'csm.nov.ru' `
-| Remove-YandexAdmin 'sergei.e.gushchin' -PassThru `
-| Get-YandexAdmins;
+| Remove-Admin 'sergei.e.gushchin' -PassThru `
+| Get-Admins;
 #>
 
 <#
@@ -68,20 +68,20 @@ $DomainName `
     , @{ name='sn'; expression={ 'Иванов'; } } `
     , @{ name='givenName'; expression={ 'Иван'; } } `
     , @{ name='middleName'; expression={ 'Иванович' } } `
-| New-YandexMailbox `
+| New-Mailbox `
 ;
 #>
 
 <#
 'sergei.s.betke' `
 , 'sergei.e.gushchin' `
-| New-YandexMailList `
+| New-MailList `
     -DomainName 'csm.nov.ru' `
     -LName 'test-maillist' `
 ;
 #>
 <#
-New-YandexMailList `
+New-MailList `
     -DomainName 'csm.nov.ru' `
     -LName 'test-maillist2' `
     -Member 'sergei.s.betke', 'sergei.e.gushchin' `
@@ -89,24 +89,25 @@ New-YandexMailList `
 ;
 #>
 <#
-Get-YandexForwards 'postmaster' `
+Get-Forwards 'postmaster' `
 | % { $_.filter_param } `
 ;
 #>
-#Remove-YandexMailList 'test-maillist', 'test-maillist2';
+#Remove-MailList 'test-maillist', 'test-maillist2';
 
-#Get-YandexMailboxes;
+#Get-Mailboxes;
 
 <#
-Remove-YandexForward `
+Remove-Forward `
     -LName 'postmaster' `
     -DestLName 'sergei.e.gushchin' `
 ;
 #>
-New-YandexForward `
-    -LName 'postmaster' `
-    -DestLName 'sergei.e.gushchin' `
-;
-Get-YandexForwards 'postmaster' `
-| % { $_.filter_param } `
-;
+#New-Forward `
+#    -LName 'postmaster' `
+#    -DestLName 'sergei.e.gushchin' `
+#;
+#Get-Forward 'postmaster' `
+#| % { $_.filter_param } `
+#;
+#
