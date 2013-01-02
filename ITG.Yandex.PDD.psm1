@@ -15,13 +15,8 @@ function Set-DefaultEmail {
 			Метод позволяет задать почтовый ящик по умолчанию для домена.
 			Ящик по умолчанию - это ящик, в который приходят все письма на домен, адресованные в
 			несуществующие на этом домене ящики.
-			Синтаксис запроса:
-				https://pddimp.yandex.ru/api/reg_default_user.xml ?
-					token =<токен>
-					& domain =<домен>
-					& login =<имя ящика>
 		.Link
-			[API Яндекс.Почты - reg_default_user](http://api.yandex.ru/pdd/doc/api-pdd/reference/domain-control_reg_default_user.xml)
+			[reg_default_user]: http://api.yandex.ru/pdd/doc/api-pdd/reference/domain-control_reg_default_user.xml
 		.Example
 			Set-DefaultEmail -DomainName 'csm.nov.ru' -LName 'master';
 	#>
@@ -44,7 +39,7 @@ function Set-DefaultEmail {
 		[Alias("Domain")]
 		$DomainName
 	,
-		# имя почтового ящика. Ящик с именем lname должен уже существовать
+		# имя почтового ящика. Ящик с именем `$LName` должен уже существовать
 		[Parameter(
 			Mandatory=$true
 			, ValueFromPipelineByPropertyName=$true
@@ -82,13 +77,8 @@ function Get-Mailbox {
 		.Description
 			Метод (обёртка над Яндекс.API get_domain_users) Метод позволяет получить список почтовых ящиков.
 			Метод возвращает список ящиков в домене, привязанном к токену.
-			Синтаксис запроса:
-				https://pddimp.yandex.ru/get_domain_users.xml ?
-					token =<токен>
-					& on_page =<число записей на странице>
-					& page =<номер страницы>
 		.Link
-			[API Яндекс.Почты - get_domain_users](http://api.yandex.ru/pdd/doc/api-pdd/reference/domain-control_get_domain_users.xml)
+			[get_domain_users]: http://api.yandex.ru/pdd/doc/api-pdd/reference/domain-control_get_domain_users.xml
 		.Example
 			Get-Mailbox -DomainName 'csm.nov.ru';
 	#>
@@ -143,13 +133,8 @@ function New-Mailbox {
 		.Description
 			Метод (обёртка над Яндекс.API reg_user) предназначен для регистрации
 			нового пользователя (ящика) на "припаркованном" на Яндексе домене.
-			Синтаксис запроса:
-				https://pddimp.yandex.ru/reg_user_token.xml ?
-					token =<токен>
-					& u_login =<логин пользователя> 
-					& u_password =<пароль пользователя>
 		.Link
-			[API Яндекс.Почты - reg_user](http://api.yandex.ru/pdd/doc/api-pdd/reference/domain-users_reg_user.xml)
+			[reg_user]: http://api.yandex.ru/pdd/doc/api-pdd/reference/domain-users_reg_user.xml
 		.Example
 			New-Mailbox -DomainName 'csm.nov.ru' -LName 'test_user' -Password 'testpassword';
 	#>
@@ -312,18 +297,8 @@ function Edit-Mailbox {
 		.Description
 			Метод (обёртка над Яндекс.API edit_user) предназначен для редактирования
 			сведений о пользователе ящика на "припаркованном" на Яндексе домене.
-			Синтаксис запроса:
-				https://pddimp.yandex.ru/edit_user.xml ?
-					token =<токен>
-					& login =<логин пользователя>
-					& [password =<пароль пользователя>]
-					& [iname =<имя пользователя>]
-					& [fname =<фамилия пользователя>]
-					& [sex =<пол пользователя>]
-					& [hintq =<секретный вопрос>]
-					& [hinta =<ответ на секретный вопрос>]
 		.Link
-			[API Яндекс.Почты - edit_user](http://api.yandex.ru/pdd/doc/api-pdd/reference/domain-users_edit_user.xml)
+			[edit_user]: http://api.yandex.ru/pdd/doc/api-pdd/reference/domain-users_edit_user.xml
 		.Example
 			Edit-Mailbox -DomainName 'csm.nov.ru' -LName 'test_user' -Password 'testpassword';
 	#>
@@ -455,13 +430,8 @@ function Remove-Mailbox {
 		.Description
 			Метод (обёртка над Яндекс.API del_user) предназначен для удаления
 			ящика на "припаркованном" на Яндексе домене.
-			Синтаксис запроса:
-				https://pddimp.yandex.ru/api/del_user.xml ?
-					token =<токен>
-					& domain =<имя домена>
-					& login =<имя почтового ящика>
 		.Link
-			[API Яндекс.Почты - del_user](http://api.yandex.ru/pdd/doc/api-pdd/reference/domain-users_del_user.xml)
+			[del_user]: http://api.yandex.ru/pdd/doc/api-pdd/reference/domain-users_del_user.xml
 		.Example
 			Remove-Mailbox -DomainName 'csm.nov.ru' -LName 'test_user';
 	#>
@@ -522,12 +492,8 @@ function Get-MailListMember {
 		.Description
 			Метод (обёртка над Яндекс.API get_forward_list) предназначен для получения
 			перенаправлений почты для ящика на "припаркованном" на Яндексе домене.
-			Синтаксис запроса:
-				https://pddimp.yandex.ru/get_forward_list.xml ?
-					token =<токен>
-					& login =<логин пользователя>
 		.Link
-			[API Яндекс.Почты - get_forward_list](http://api.yandex.ru/pdd/doc/api-pdd/reference/domain-users_get_forward_list.xml)
+			[get_forward_list]: http://api.yandex.ru/pdd/doc/api-pdd/reference/domain-users_get_forward_list.xml
 		.Example
 			Get-MailListMember -DomainName 'csm.nov.ru' -LName 'sergei.s.betke';
 	#>
@@ -597,14 +563,8 @@ function New-MailListMember {
 		.Description
 			Метод (обёртка над Яндекс.API set_forward) предназначен для создания
 			перенаправлений почты для ящика на "припаркованном" на Яндексе домене.
-			Синтаксис запроса:
-				https://pddimp.yandex.ru/set_forward.xml ?
-					token =<токен>
-					& login =<логин пользователя>
-					& address =<e-mail для пересылки>
-					& copy =<признак сохранения исходников>
 		.Link
-			[API Яндекс.Почты - set_forward](http://api.yandex.ru/pdd/doc/api-pdd/reference/domain-users_set_forward.xml)
+			[set_forward]: http://api.yandex.ru/pdd/doc/api-pdd/reference/domain-users_set_forward.xml
 		.Example
 			New-MailListMember -DomainName 'csm.nov.ru' -MailListLName 'mail' -LName 'sergei.s.betke';
 	#>
@@ -691,13 +651,8 @@ function Remove-MailListMember {
 		.Description
 			Метод (обёртка над Яндекс.API delete_forward) предназначен для удаления 
 			перенаправлений почты для ящика на "припаркованном" на Яндексе домене.
-			Синтаксис запроса:
-				https://pddimp.yandex.ru/delete_forward.xml ?
-					token =<токен>
-					& login =<логин пользователя>
-					& filter_id =<id фильтра>
 		.Link
-			[API Яндекс.Почты - delete_forward](http://api.yandex.ru/pdd/doc/api-pdd/reference/domain-users_delete_forward.xml)
+			[delete_forward]: http://api.yandex.ru/pdd/doc/api-pdd/reference/domain-users_delete_forward.xml
 		.Example
 			Remove-MailListMember -DomainName 'csm.nov.ru' -MailListLName 'mail' -LName 'sergei.s.betke';
 	#>
@@ -801,13 +756,8 @@ function New-MailList {
 		.Description
 			Создание группы рассылки, включающей всех пользователей домена. Обёртка 
 			над create_general_maillist.
-			Синтаксис запроса:
-				https://pddimp.yandex.ru/api/create_general_maillist.xml ?
-					token =<токен>
-					& domain =<имя домена>
-					& ml_name =<имя рассылки>
 		.Link
-			[API Яндекс.Почты - create_general_maillist](http://api.yandex.ru/pdd/doc/api-pdd/reference/maillist_create_general_maillist.xml)
+			[create_general_maillist]: http://api.yandex.ru/pdd/doc/api-pdd/reference/maillist_create_general_maillist.xml
 		.Example
 			New-MailList -DomainName 'csm.nov.ru' -MailListLName 'all';
 	#>
@@ -916,13 +866,8 @@ function Remove-MailList {
 		.Description
 			Метод предназначен для удаления группы рассылки на "припаркованном" на Яндексе домене.
 			Обёртка для delete_general_maillist.
-			Синтаксис запроса:
-				https://pddimp.yandex.ru/api/delete_general_maillist.xml ?
-					token =<токен>
-					& domain =<имя домена>
-					& ml_name =<имя рассылки>
 		.Link
-			[API Яндекс.Почты - delete_general_maillist](http://api.yandex.ru/pdd/doc/api-pdd/reference/maillist_delete_general_maillist.xml)
+			[delete_general_maillist]: http://api.yandex.ru/pdd/doc/api-pdd/reference/maillist_delete_general_maillist.xml
 		.Example
 			Remove-MailList -DomainName 'csm.nov.ru' -MailListLName 'test_maillist';
 	#>

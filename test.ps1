@@ -13,13 +13,18 @@ param (
 )
 
 Import-Module `
-    (join-path `
-        -path ( ( [System.IO.FileInfo] ( $myinvocation.mycommand.path ) ).directory ) `
-        -childPath 'ITG.Yandex.PDD' `
+	(Join-Path `
+		-Path ( Split-Path -Path ( $MyInvocation.MyCommand.Path ) -Parent ) `
+        -ChildPath 'ITG.Yandex.PDD' `
     ) `
 	-Force `
 	-PassThru `
-| Get-Readme -OutDefaultFile;
+| Get-Readme `
+	-OutDefaultFile `
+	-ReferencedModules @(
+		'ITG.Yandex', 'ITG.Utils', 'ITG.WinAPI.UrlMon', 'ITG.WinAPI.User32' | Get-Module
+	) `
+;
 
 #$Token = Get-Token $DomainName -ErrorAction Stop;
 

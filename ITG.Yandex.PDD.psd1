@@ -29,7 +29,10 @@ CompanyName = 'IT-Service.Nov.RU'
 Copyright = '(c) 2012 Sergey S. Betke. All rights reserved.'
 
 # Описание функций данного модуля
-Description = 'Обёртки для API Яндекс.Почта для домена (pdd.yandex.ru) и командлеты на их основе.'
+Description = @'
+Обёртки для API Яндекс.Почта для домена pdd.yandex.ru и командлеты на их основе.
+[pdd.yandex.ru]: http://pdd.yandex.ru "Яндекс.Почта для домена"
+'@
 
 # Минимальный номер версии обработчика Windows PowerShell, необходимой для работы данного модуля
 PowerShellVersion = '2.0'
