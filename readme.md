@@ -1621,21 +1621,21 @@ API Яндекс.Почты для доменов
 
 
 [about_CommonParameters]: http://go.microsoft.com/fwlink/?LinkID=113216 "Описание параметров, которые могут использоваться с любым командлетом."
-[add_logo]:  
+[add_logo]: http://api.yandex.ru/pdd/doc/api-pdd/reference/domain-control_add_logo.xml 
 [ConvertTo-Contact]: <ITG.Yandex.PDD#ConvertTo-Contact> "Преобразует объект в конвейере в объект со свойствами контакта Яндекс."
 [create_general_maillist]: http://api.yandex.ru/pdd/doc/api-pdd/reference/maillist_create_general_maillist.xml 
-[del_admin]:  
-[del_domain]:  
-[del_logo]:  
+[del_admin]: http://api.yandex.ru/pdd/doc/api-pdd/reference/domain-control_del_admin.xml 
+[del_domain]: http://api.yandex.ru/pdd/doc/api-pdd/reference/domain-control_del_domain.xml 
+[del_logo]: http://api.yandex.ru/pdd/doc/api-pdd/reference/domain-control_del_logo.xml#domain-control_del_logo 
 [del_user]: http://api.yandex.ru/pdd/doc/api-pdd/reference/domain-users_del_user.xml 
 [delete_forward]: http://api.yandex.ru/pdd/doc/api-pdd/reference/domain-users_delete_forward.xml 
 [delete_general_maillist]: http://api.yandex.ru/pdd/doc/api-pdd/reference/maillist_delete_general_maillist.xml 
 [edit_user]: http://api.yandex.ru/pdd/doc/api-pdd/reference/domain-users_edit_user.xml 
 [Edit-Mailbox]: <ITG.Yandex.PDD#Edit-Mailbox> "Метод (обёртка над Яндекс.API edit_user) предназначен для редактирования сведений о пользователе ящика на "припаркованном" на Яндексе домене."
-[get_admins]:  
+[get_admins]: http://api.yandex.ru/pdd/doc/api-pdd/reference/domain-control_get_admins.xml 
 [get_domain_users]: http://api.yandex.ru/pdd/doc/api-pdd/reference/domain-control_get_domain_users.xml 
 [get_forward_list]: http://api.yandex.ru/pdd/doc/api-pdd/reference/domain-users_get_forward_list.xml 
-[Get-Admin]: <#Get-Admin> "Метод (обёртка над Яндекс.API get_admins). Метод позволяет получить список дополнительных администраторов домена."
+[Get-Admin]: <ITG.Yandex#Get-Admin> "Метод (обёртка над Яндекс.API get_admins). Метод позволяет получить список дополнительных администраторов домена."
 [Get-Mailbox]: <ITG.Yandex.PDD#Get-Mailbox> "Метод (обёртка над Яндекс.API get_domain_users) Метод позволяет получить список почтовых ящиков."
 [Get-MailListMember]: <ITG.Yandex.PDD#Get-MailListMember> "Метод (обёртка над Яндекс.API get_forward_list) предназначен для получения перенаправлений почты для ящика на "припаркованном" на Яндексе домене."
 [Get-Token]: <ITG.Yandex#Get-Token> "Метод (обёртка над Яндекс.API get_token) предназначен для получения авторизационного токена."
@@ -1644,20 +1644,20 @@ API Яндекс.Почты для доменов
 [New-MailListMember]: <ITG.Yandex.PDD#New-MailListMember> "Метод (обёртка над Яндекс.API set_forward) предназначен для создания перенаправлений почты для ящика на "припаркованном" на Яндексе домене."
 [pdd.yandex.ru]: http://pdd.yandex.ru "Яндекс.Почта для домена"
 [reg_default_user]: http://api.yandex.ru/pdd/doc/api-pdd/reference/domain-control_reg_default_user.xml 
-[reg_domain]:  
+[reg_domain]: http://api.yandex.ru/pdd/doc/api-pdd/reference/domain-control_reg_domain.xml 
 [reg_user]: http://api.yandex.ru/pdd/doc/api-pdd/reference/domain-users_reg_user.xml 
-[Register-Admin]: <#Register-Admin> "Метод (обёртка над Яндекс.API set_admin) предназначен для указания логина дополнительного администратора домена."
-[Register-Domain]: <#Register-Domain> "Метод (обёртка над Яндекс.API reg_domain) предназначен для регистрации домена на сервисах Яндекса."
-[Remove-Admin]: <#Remove-Admin> "Метод (обёртка над Яндекс.API del_admin) предназначен для удаления дополнительного администратора домена."
-[Remove-Domain]: <#Remove-Domain> "Метод (обёртка над Яндекс.API del_domain) предназначен для отключения домена от Яндекс.Почта для доменов."
-[Remove-Logo]: <#Remove-Logo> "Метод (обёртка над Яндекс.API del_logo) предназначен для удаления логотипа домена."
+[Register-Admin]: <ITG.Yandex#Register-Admin> "Метод (обёртка над Яндекс.API set_admin) предназначен для указания логина дополнительного администратора домена."
+[Register-Domain]: <ITG.Yandex#Register-Domain> "Метод (обёртка над Яндекс.API reg_domain) предназначен для регистрации домена на сервисах Яндекса."
+[Remove-Admin]: <ITG.Yandex#Remove-Admin> "Метод (обёртка над Яндекс.API del_admin) предназначен для удаления дополнительного администратора домена."
+[Remove-Domain]: <ITG.Yandex#Remove-Domain> "Метод (обёртка над Яндекс.API del_domain) предназначен для отключения домена от Яндекс.Почта для доменов."
+[Remove-Logo]: <ITG.Yandex#Remove-Logo> "Метод (обёртка над Яндекс.API del_logo) предназначен для удаления логотипа домена."
 [Remove-Mailbox]: <ITG.Yandex.PDD#Remove-Mailbox> "Метод (обёртка над Яндекс.API del_user) предназначен для удаления ящика на "припаркованном" на Яндексе домене."
 [Remove-MailList]: <ITG.Yandex.PDD#Remove-MailList> "Метод предназначен для удаления группы рассылки на "припаркованном" на Яндексе домене. Обёртка для delete_general_maillist."
 [Remove-MailListMember]: <ITG.Yandex.PDD#Remove-MailListMember> "Метод (обёртка над Яндекс.API delete_forward) предназначен для удаления перенаправлений почты для ящика на "припаркованном" на Яндексе домене."
-[set_admin]:  
+[set_admin]: http://api.yandex.ru/pdd/doc/api-pdd/reference/domain-control_add_admin.xml 
 [set_forward]: http://api.yandex.ru/pdd/doc/api-pdd/reference/domain-users_set_forward.xml 
 [Set-DefaultEmail]: <ITG.Yandex.PDD#Set-DefaultEmail> "Метод (обёртка над Яндекс.API reg_default_user) предназначен для указания ящика, который будет получать почту при обнаружении в адресе несуществующего на текущий момент в домене lname."
-[Set-Logo]: <#Set-Logo> "Метод (обёртка над Яндекс.API add_logo) предназначен для установки логотипа для домена."
+[Set-Logo]: <ITG.Yandex#Set-Logo> "Метод (обёртка над Яндекс.API add_logo) предназначен для установки логотипа для домена."
 
 ---------------------------------------
 
