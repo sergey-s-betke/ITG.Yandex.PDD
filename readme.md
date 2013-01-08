@@ -1,8 +1,8 @@
 ﻿ITG.Yandex.PDD
 ==============
 
-Обёртки для API Яндекс.Почта для домена pdd.yandex.ru и командлеты на их основе.
-[pdd.yandex.ru]: <http://pdd.yandex.ru> "Яндекс.Почта для домена"
+Обёртки для API Яндекс.Почта для домена [pdd.yandex.ru][] и командлеты на их основе.
+[pdd.yandex.ru][]
 
 Версия модуля: **4.1.1**
 
@@ -229,7 +229,7 @@ API Яндекс.Почты для доменов
         Данный командлет поддерживает общие параметры: Verbose, Debug,
         ErrorAction, ErrorVariable, WarningAction, WarningVariable,
         OutBuffer и OutVariable. Для получения дополнительных сведений введите
-        "get-help [about_CommonParameters][]".
+        [`get-help about_CommonParameters`][about_CommonParameters].
 
 
 
@@ -307,7 +307,7 @@ API Яндекс.Почты для доменов
         Данный командлет поддерживает общие параметры: Verbose, Debug,
         ErrorAction, ErrorVariable, WarningAction, WarningVariable,
         OutBuffer и OutVariable. Для получения дополнительных сведений введите
-        "get-help [about_CommonParameters][]".
+        [`get-help about_CommonParameters`][about_CommonParameters].
 
 
 
@@ -385,7 +385,7 @@ API Яндекс.Почты для доменов
         Данный командлет поддерживает общие параметры: Verbose, Debug,
         ErrorAction, ErrorVariable, WarningAction, WarningVariable,
         OutBuffer и OutVariable. Для получения дополнительных сведений введите
-        "get-help [about_CommonParameters][]".
+        [`get-help about_CommonParameters`][about_CommonParameters].
 
 
 
@@ -473,7 +473,7 @@ API Яндекс.Почты для доменов
         Данный командлет поддерживает общие параметры: Verbose, Debug,
         ErrorAction, ErrorVariable, WarningAction, WarningVariable,
         OutBuffer и OutVariable. Для получения дополнительных сведений введите
-        "get-help [about_CommonParameters][]".
+        [`get-help about_CommonParameters`][about_CommonParameters].
 
 
 
@@ -537,7 +537,7 @@ API Яндекс.Почты для доменов
         Данный командлет поддерживает общие параметры: Verbose, Debug,
         ErrorAction, ErrorVariable, WarningAction, WarningVariable,
         OutBuffer и OutVariable. Для получения дополнительных сведений введите
-        "get-help [about_CommonParameters][]".
+        [`get-help about_CommonParameters`][about_CommonParameters].
 
 
 
@@ -604,7 +604,7 @@ API Яндекс.Почты для доменов
         Данный командлет поддерживает общие параметры: Verbose, Debug,
         ErrorAction, ErrorVariable, WarningAction, WarningVariable,
         OutBuffer и OutVariable. Для получения дополнительных сведений введите
-        "get-help [about_CommonParameters][]".
+        [`get-help about_CommonParameters`][about_CommonParameters].
 
 
 
@@ -673,7 +673,7 @@ API Яндекс.Почты для доменов
         Данный командлет поддерживает общие параметры: Verbose, Debug,
         ErrorAction, ErrorVariable, WarningAction, WarningVariable,
         OutBuffer и OutVariable. Для получения дополнительных сведений введите
-        "get-help [about_CommonParameters][]".
+        [`get-help about_CommonParameters`][about_CommonParameters].
 
 
 
@@ -739,7 +739,7 @@ API Яндекс.Почты для доменов
         Данный командлет поддерживает общие параметры: Verbose, Debug,
         ErrorAction, ErrorVariable, WarningAction, WarningVariable,
         OutBuffer и OutVariable. Для получения дополнительных сведений введите
-        "get-help [about_CommonParameters][]".
+        [`get-help about_CommonParameters`][about_CommonParameters].
 
 
 
@@ -821,7 +821,7 @@ API Яндекс.Почты для доменов
         Данный командлет поддерживает общие параметры: Verbose, Debug,
         ErrorAction, ErrorVariable, WarningAction, WarningVariable,
         OutBuffer и OutVariable. Для получения дополнительных сведений введите
-        "get-help [about_CommonParameters][]".
+        [`get-help about_CommonParameters`][about_CommonParameters].
 
 
 
@@ -943,7 +943,7 @@ API Яндекс.Почты для доменов
         Данный командлет поддерживает общие параметры: Verbose, Debug,
         ErrorAction, ErrorVariable, WarningAction, WarningVariable,
         OutBuffer и OutVariable. Для получения дополнительных сведений введите
-        "get-help [about_CommonParameters][]".
+        [`get-help about_CommonParameters`][about_CommonParameters].
 
 
 
@@ -1001,7 +1001,7 @@ API Яндекс.Почты для доменов
         Данный командлет поддерживает общие параметры: Verbose, Debug,
         ErrorAction, ErrorVariable, WarningAction, WarningVariable,
         OutBuffer и OutVariable. Для получения дополнительных сведений введите
-        "get-help [about_CommonParameters][]".
+        [`get-help about_CommonParameters`][about_CommonParameters].
 
 
 
@@ -1132,7 +1132,7 @@ API Яндекс.Почты для доменов
         Данный командлет поддерживает общие параметры: Verbose, Debug,
         ErrorAction, ErrorVariable, WarningAction, WarningVariable,
         OutBuffer и OutVariable. Для получения дополнительных сведений введите
-        "get-help [about_CommonParameters][]".
+        [`get-help about_CommonParameters`][about_CommonParameters].
 
 
 
@@ -1208,7 +1208,7 @@ API Яндекс.Почты для доменов
         Данный командлет поддерживает общие параметры: Verbose, Debug,
         ErrorAction, ErrorVariable, WarningAction, WarningVariable,
         OutBuffer и OutVariable. Для получения дополнительных сведений введите
-        "get-help [about_CommonParameters][]".
+        [`get-help about_CommonParameters`][about_CommonParameters].
 
 
 
@@ -1301,7 +1301,7 @@ API Яндекс.Почты для доменов
         Данный командлет поддерживает общие параметры: Verbose, Debug,
         ErrorAction, ErrorVariable, WarningAction, WarningVariable,
         OutBuffer и OutVariable. Для получения дополнительных сведений введите
-        "get-help [about_CommonParameters][]".
+        [`get-help about_CommonParameters`][about_CommonParameters].
 
 
 
@@ -1368,7 +1368,7 @@ API Яндекс.Почты для доменов
         Данный командлет поддерживает общие параметры: Verbose, Debug,
         ErrorAction, ErrorVariable, WarningAction, WarningVariable,
         OutBuffer и OutVariable. Для получения дополнительных сведений введите
-        "get-help [about_CommonParameters][]".
+        [`get-help about_CommonParameters`][about_CommonParameters].
 
 
 
@@ -1435,7 +1435,7 @@ API Яндекс.Почты для доменов
         Данный командлет поддерживает общие параметры: Verbose, Debug,
         ErrorAction, ErrorVariable, WarningAction, WarningVariable,
         OutBuffer и OutVariable. Для получения дополнительных сведений введите
-        "get-help [about_CommonParameters][]".
+        [`get-help about_CommonParameters`][about_CommonParameters].
 
 
 
@@ -1520,7 +1520,7 @@ API Яндекс.Почты для доменов
         Данный командлет поддерживает общие параметры: Verbose, Debug,
         ErrorAction, ErrorVariable, WarningAction, WarningVariable,
         OutBuffer и OutVariable. Для получения дополнительных сведений введите
-        "get-help [about_CommonParameters][]".
+        [`get-help about_CommonParameters`][about_CommonParameters].
 
 
 
@@ -1605,7 +1605,7 @@ API Яндекс.Почты для доменов
         Данный командлет поддерживает общие параметры: Verbose, Debug,
         ErrorAction, ErrorVariable, WarningAction, WarningVariable,
         OutBuffer и OutVariable. Для получения дополнительных сведений введите
-        "get-help [about_CommonParameters][]".
+        [`get-help about_CommonParameters`][about_CommonParameters].
 
 
 
@@ -1642,6 +1642,7 @@ API Яндекс.Почты для доменов
 [New-Mailbox]: <ITG.Yandex.PDD#New-Mailbox> "Метод (обёртка над Яндекс.API reg_user) предназначен для регистрации нового пользователя (ящика) на "припаркованном" на Яндексе домене."
 [New-MailList]: <ITG.Yandex.PDD#New-MailList> "Создание группы рассылки, включающей всех пользователей домена. Обёртка над create_general_maillist."
 [New-MailListMember]: <ITG.Yandex.PDD#New-MailListMember> "Метод (обёртка над Яндекс.API set_forward) предназначен для создания перенаправлений почты для ящика на "припаркованном" на Яндексе домене."
+[pdd.yandex.ru]: http://pdd.yandex.ru "Яндекс.Почта для домена"
 [reg_default_user]: http://api.yandex.ru/pdd/doc/api-pdd/reference/domain-control_reg_default_user.xml 
 [reg_domain]:  
 [reg_user]: http://api.yandex.ru/pdd/doc/api-pdd/reference/domain-users_reg_user.xml 
