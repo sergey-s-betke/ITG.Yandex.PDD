@@ -11,10 +11,10 @@
 @{
 
 # Файл модуля скрипта или двоичного модуля, связанный с данным манифестом
-ModuleToProcess = 'ITG.Yandex.PDD.psm1'
+RootModule = 'ITG.Yandex.PDD.psm1'
 
 # Номер версии данного модуля.
-ModuleVersion = '4.1.1'
+ModuleVersion = '4.2.0'
 
 # Уникальный идентификатор данного модуля
 GUID = '826e836c-d10c-4d4d-b86b-8b4a41829bbe'
@@ -35,7 +35,7 @@ Description = @'
 '@
 
 # Минимальный номер версии обработчика Windows PowerShell, необходимой для работы данного модуля
-PowerShellVersion = '2.0'
+PowerShellVersion = '3.0'
 
 # Имя узла Windows PowerShell, необходимого для работы данного модуля
 PowerShellHostName = ''
@@ -54,15 +54,16 @@ ProcessorArchitecture = ''
 
 # Модули, которые необходимо импортировать в глобальную среду перед импортированием данного модуля
 RequiredModules = @(
+    @{ModuleName = 'ITG.Yandex'; ModuleVersion = '2.0'} `
+,   @{ModuleName = 'ITG.RegExps'; ModuleVersion = '1.1'} `
+,   @{ModuleName = 'ITG.Utils'; ModuleVersion = '2.0'} `
 )
 
 # Сборки, которые должны быть загружены перед импортированием данного модуля
 RequiredAssemblies = @()
 
 # Файлы скрипта (.ps1), которые запускаются в среде вызывающей стороны перед импортированием данного модуля
-ScriptsToProcess = @(
-	'ITG.PrepareModulesEnv.ps1'
-)
+ScriptsToProcess = @()
 
 # Файлы типа (.ps1xml), которые загружаются при импорте данного модуля
 TypesToProcess = @()
@@ -90,8 +91,10 @@ ModuleList = @()
 
 # Список всех файлов, входящих в пакет данного модуля
 FileList = `
-	'ITG.Yandex.PDD.psm1',
-	'ITG.PrepareModulesEnv.ps1'
+	'ITG.Yandex.PDD.psm1' `
+,	'ITG.Yandex.PDD.psd1' `
+,	'readme.md' `
+;
 
 # Личные данные, передаваемые в модуль, указанный в параметре ModuleToProcess
 PrivateData = ''
