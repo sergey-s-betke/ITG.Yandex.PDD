@@ -1,7 +1,6 @@
-﻿'ITG.Yandex' `
-, 'ITG.RegExps' `
-, 'ITG.Utils' `
-| Import-Module;
+﻿Import-Module -Name 'ITG.Yandex' -MinimumVersion '2.0';
+Import-Module -Name 'ITG.RegExps' -MinimumVersion '1.1';
+Import-Module -Name 'ITG.Utils' -MinimumVersion '2.0';
 
 function Set-DefaultEmail {
 	<#
